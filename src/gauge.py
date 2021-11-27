@@ -1,6 +1,8 @@
 class Gauge():
-    def __init__(self, options, data) -> None:
-        pass
+    def __init__(self, options, resources, data) -> None:
+        self.options = options
+        self.resources = resources
+        self.data = data
 
     def subscribed_streams(self):
         return set()
@@ -11,6 +13,9 @@ class Gauge():
     def stream_updated(self, field_spec):
         return None
     
-    def update(self):
+    async def update(self):
         return None
     
+    @property
+    def update_freq(self):
+        return self.options['update_freq']

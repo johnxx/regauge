@@ -2,21 +2,22 @@ from gauge import Gauge
 from stream_spec import StreamSpec
 
 class SimpleGauge(Gauge):
-    def __init__(self, options, data) -> None:
+    def __init__(self, options, resources, data) -> None:
         self.stream_spec = StreamSpec(**options['stream_spec'])
+        self.options = options
 
-        gauge_face_class = __import__(options['gauge_face']['type'])
-        options['gauge_face']['stream_spec'] = self.stream_spec
-        self.face = gauge_face_class(options['gauge_face'])
+        gauge_face_module = __import__('gauge_face_' + options['gauge_face']['type'])
+        gauge_face_class = getattr(gauge_face_module, 'Face')
+        self.face = gauge_face_class(self.stream_spec, options['gauge_face'], resources)
 
         self.data = data
         
     def subscribed_streams(self):
-        return set(self.stream_spec.field_spec)
+        return [self.stream_spec.field_spec]
     
     def stream_updated(self, field_spec):
         if self.stream_spec.field_spec == field_spec:
-            self.face.value = int(self.data['field_spec'] * self.stream_spec.units['conversion_factor'])
+            self.face.value = int(self.data[field_spec]['value'] * self.stream_spec.units['conversion_factor'])
 
-    def update(self):
+    async def update(self):
         self.face.update()

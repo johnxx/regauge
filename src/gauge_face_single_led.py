@@ -1,17 +1,28 @@
+import json
 class Face:
+    
+    default_options = {
+        'warning_level': 0.75, 
+        'critical_level': 0.95, 
+        'normal_color': 0x00ff00,
+        'warning_color': 0xffff00, 
+        'critical_color': 0xff0000
+    }
 
-    def __init__(self, stream_spec=None, pixel=None, warning_level=0.75, critical_level=0.95, normal_color=0x00ff00, warning_color=0xffff00, critical_color=0xff0000) -> None:
-        if not stream_spec or not pixel:
-            raise ValueError("stream_spec and pixel are required")
-        if pixel.n > 1:
-            raise ValueError("We only want 1 NeoPixel")
+    def __init__(self, stream_spec, options, resources) -> None:
+        if not stream_spec or not resources['leds']:
+            raise ValueError("stream_spec is required")
+        if not resources['leds'] or resources['leds'].n() != 1:
+            raise ValueError("We need exactly 1 NeoPixel")
+
         self.stream_spec = stream_spec
-        self.pixel = pixel
-        self.warning_level = warning_level
-        self.critical_level = critical_level
-        self.normal_color = normal_color
-        self.warning_color = warning_color
-        self.critical_color = critical_color
+        self.options = options
+        for key, val in self.default_options.items():
+            if key not in self.options:
+                self.options[key] = val
+        self.resources = resources
+
+        self._value = self.stream_spec.min_val
 
     @property
     def value(self):
@@ -23,12 +34,14 @@ class Face:
             self._value = value
 
     def _pick_color(self):
-        if self.value > self.critical_level:
-            return self.critical_color
-        elif self.value > self.warning_level:
-            return self.warning_color
+        if self.value > self.options['critical_level']:
+            return self.options['critical_color']
+        elif self.value > self.options['warning_level']:
+            return self.options['warning_color']
         else:
-            return self.normal_color
+            return self.options['normal_color']
 
     def update(self):
-       self.pixel[0] = self._pick_color 
+        # print("Updating to show new value: {}".format(self.value))
+        # print(self.options)
+        self.resources['leds'][0] = self._pick_color()

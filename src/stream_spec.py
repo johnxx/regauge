@@ -17,8 +17,7 @@ class StreamSpec():
         },
     }
 
-    def __init__(self, name, field_spec, min_val=0, max_val=100, sig_digs=0, units=None) -> None:
-        self.name = name
+    def __init__(self, field_spec, min_val=0, max_val=100, sig_digs=0, units=None) -> None:
         self.field_spec = field_spec
         self.min_val = min_val
         self.max_val = max_val
