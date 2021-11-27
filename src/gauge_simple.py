@@ -21,3 +21,9 @@ class SimpleGauge(Gauge):
 
     async def update(self):
         self.face.update()
+        
+    def config_updated(self, options):
+        try:
+            self.face.config_updated(options['gauge_face'])
+        except NotImplementedError as e:
+            pass

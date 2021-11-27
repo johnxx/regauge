@@ -19,3 +19,6 @@ class Gauge():
     @property
     def update_freq(self):
         return self.options['update_freq']
+    
+    def config_updated(self):
+        pass

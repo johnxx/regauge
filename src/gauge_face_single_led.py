@@ -1,5 +1,5 @@
-import json
-class Face:
+from gauge_face import GaugeFace
+class Face(GaugeFace):
     
     default_options = {
         'warning_level': 0.75, 
@@ -16,22 +16,10 @@ class Face:
             raise ValueError("We need exactly 1 NeoPixel")
 
         self.stream_spec = stream_spec
-        self.options = options
-        for key, val in self.default_options.items():
-            if key not in self.options:
-                self.options[key] = val
+        self.options = self._apply_defaults(options)
         self.resources = resources
 
         self._value = self.stream_spec.min_val
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        if value <= self.stream_spec.max_val and value >= self.stream_spec.min_val:
-            self._value = value
 
     def _pick_color(self):
         if self.value > self.options['critical_level']:

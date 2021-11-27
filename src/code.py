@@ -2,7 +2,6 @@ import asynccp
 import asynccp.time as Duration
 import board
 import displayio
-import json
 import neopixel_slice
 
 debug = True
@@ -55,13 +54,32 @@ data_sources = {
 }
 
 gauges = {
-    "cpu_led": {
+    "fan_speed_leds": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
         'update_freq': 30,
         'resources': {
-            'leds': 'single_led'
+            'leds': 'right_leds_ccw'
+        },
+        'stream_spec': {
+            'field_spec': 'fan_rpm',
+            'min_val': 0,
+            'max_val': 6000
+        },
+        'gauge_face': {
+            'type': 'multi_led',
+            'normal_color': 0x0000ff,
+            'warning_level': 9999,
+            'critical_level': 9999
+        }
 
+    },
+    "cpu_temp_leds": {
+        'type': 'simple',
+        'sub_type': 'SimpleGauge',
+        'update_freq': 30,
+        'resources': {
+            'leds': 'left_leds_cw'
         },
         'stream_spec': {
             'field_spec': 'cputemp_cel',
@@ -69,9 +87,43 @@ gauges = {
             'max_val': 100
         },
         'gauge_face': {
-            'type': 'single_led',
-            'warning_level': 75,
-            'critical_level': 95
+            'type': 'multi_led',
+            'normal_color': 0xff0000,
+            'warning_level': 999,
+            'critical_level': 999
+        }
+
+    },
+    "mem_graph": {
+        'type': 'simple',
+        'sub_type': 'SimpleGauge',
+        'update_freq': 10,
+        'resources': {
+            'display_group': 'lcd_bottom'
+        },
+        'stream_spec': {
+            'field_spec': 'mem_pct',
+            'min_val': 0,
+            'max_val': 100
+        },
+        'gauge_face': {
+            'type': 'bar_graph'
+        }
+    },
+    "cpu_lcd": {
+        'type': 'simple',
+        'sub_type': 'SimpleGauge',
+        'update_freq': 2,
+        'resources': {
+            'display_group': 'lcd_top'
+        },
+        'stream_spec': {
+            'field_spec': 'cpu_pct',
+            'min_val': 0,
+            'max_val': 400
+        },
+        'gauge_face': {
+            'type': 'text'
         }
     }
 }
@@ -89,13 +141,18 @@ layout = {
         'x_offset': 0,
         'y_offset': 120
     },
-    'single_led': {
+    'left_leds_cw': {
+        'type': 'neopixel_slice',
+        'hw_resource': 'leds',
+        'start': 8,
+        'end': 16,
+        'reverse': True
+    },
+    'right_leds_ccw': {
         'type': 'neopixel_slice',
         'hw_resource': 'leds',
         'start': 0,
-        'end': 1,
-        'step': None,
-        'reverse': False
+        'end': 8,
     }
 }
 
@@ -212,7 +269,7 @@ def setup_hardware(hardware):
 def allocate_resources(layout, resources):
     for name, config in layout.items():
         if config['type'] == 'neopixel_slice':
-            if config['step']:
+            if 'step' in config and config['step']:
                 keys = range(
                     config['start'],
                     config['end'],
@@ -223,8 +280,8 @@ def allocate_resources(layout, resources):
                     config['start'],
                     config['end']
                 )
-            if config['reverse']:
-                keys.reverse()
+            if 'reverse' in config and config['reverse']:
+                keys = list(reversed(keys))
                 
             resources[name] = neopixel_slice.NeoPixelSlice(
                 resources[config['hw_resource']], 
@@ -240,5 +297,5 @@ def allocate_resources(layout, resources):
 resources = setup_hardware(config['hardware'])
 resources = allocate_resources(config['layout'], resources)
 tasks = setup_tasks(config, resources, data)
+import json
 asynccp.run()
-

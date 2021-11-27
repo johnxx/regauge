@@ -1,5 +1,10 @@
 class StreamSpec():
     base_units = {
+        'rpm': {
+            'name': 'RPM',
+            'suffix': '/m',
+            'conversion_factor': 1
+        },
         'pct': {
             'name': 'percent',
             'suffix': '%',

@@ -3,7 +3,7 @@ from tcp_server import ListenServer
 import json
 import msgpack
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -42,10 +42,10 @@ class DataSource(ListenServer):
             except OSError as e:
                 if e.errno == 11:
                     if len(payload) == 0: # Nothing received
-                        print_dbg("Got nothing")
+                        # print_dbg("Got nothing")
                         pass
                     else: # Finished sending
-                        print_dbg("Done receiving")
+                        # print_dbg("Done receiving")
                         break
                 else:
                     print(e)
