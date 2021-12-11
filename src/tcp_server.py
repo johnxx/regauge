@@ -1,5 +1,6 @@
 class ListenServer:
-    def __init__(self, resources, target, bind_addr, listen_port, listeners=5, poll_freq=30) -> None:
+    def __init__(self, name, resources, target, bind_addr, listen_port, listeners=5, poll_freq=30) -> None:
+        self.name = name
         if not bind_addr:
             raise ValueError("Bind address (bind_addr) is required")
         if not listen_port:

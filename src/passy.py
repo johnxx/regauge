@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+debug = True
+def print_dbg(some_string, **kwargs):
+    if debug:
+        return print(some_string, **kwargs)
+
 class Passy():
     def __init__(self) -> None:
         self.subscriptions = {}
@@ -15,6 +20,7 @@ class Passy():
         return (sub_id, topic_pref)
 
     def pub(self, topic, msg, auto_send=True):
+        print_dbg("Got a message about {}".format(topic))
         for sub_id, topic_prefs in self.subscriptions.items():
             for topic_pref in topic_prefs:
                 if topic.startswith(topic_pref):
@@ -26,25 +32,23 @@ class Passy():
 
     def send(self, sub_id):
         if sub_id in self.outbox and self.outbox[sub_id]:
-            print("Sending {} messages to {}".format(len(self.outbox[sub_id]), sub_id))
-            self.subscribers[sub_id](self.outbox[sub_id])
+            print_dbg("Sending {} messages to {}".format(len(self.outbox[sub_id]), sub_id))
+            self.subscribers[sub_id](*self.outbox[sub_id])
             self.outbox[sub_id] = []
 
     def send_all(self):
-        print("Sending all events!")
+        print_dbg("Sending all events!")
         for sub_id in self.outbox:
             self.send(sub_id)
 
     def unsub(self, sub_id, topic_pref):
-        # sub_id = str(id(subscriber))
-        print("{} wants to unsubscribe from {}".format(sub_id, topic_pref))
-        # print(self.subscribers)
+        print_dbg("{} wants to unsubscribe from {}".format(sub_id, topic_pref))
         if sub_id in self.subscriptions:
             if topic_pref in self.subscriptions[sub_id]:
-                print("{} unsubsribed from {}".format(sub_id, topic_pref))
+                print_dbg("{} unsubsribed from {}".format(sub_id, topic_pref))
                 self.subscriptions[sub_id].remove(topic_pref)
                 if not self.subscriptions[sub_id]:
-                    print("{} has no more subscriptions".format(sub_id))
+                    print_dbg("{} has no more subscriptions".format(sub_id))
                     del(self.subscriptions[sub_id])
 
 class ExampleSub():
@@ -92,5 +96,7 @@ if __name__ == '__main__':
     # Unsubscribe
     for obj in objs:
         obj.unsub_all()
+    # Now send out notifications
     # We'll send out notifications for any event that happened before unsub
+    # That's intended behavior!
     p.send_all()

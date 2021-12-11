@@ -39,6 +39,13 @@ class Face(GaugeFace):
         else:
             return self.options['normal_color']
 
+    def config_updated(self, options):
+        self.options = self._apply_defaults(options)
+        print("Color set to: {}".format(self.options['normal_color']))
+        self.prev_idx = 0
+        self.update()
+
+
     def update(self):
         self.cur_idx = self._value_to_segment()
         if self.prev_idx >= 0 and self.cur_idx < self.prev_idx:

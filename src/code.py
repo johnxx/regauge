@@ -3,6 +3,7 @@ import asynccp.time as Duration
 import board
 import displayio
 import neopixel_slice
+from passy import Passy
 
 debug = True
 def print_dbg(some_string, **kwargs):
@@ -38,14 +39,16 @@ hardware = {
 }
 
 data_sources = {
-    'http_json': {
+    'config_listener': {
+        'type': 'http_json',
         'enabled': True,
         'bind_addr': '0.0.0.0',
         'listen_port': 80,
         'config_source': True
 
     },
-    'tcp_msgpack': {
+    'data_listener': {
+        'type': 'tcp_msgpack',
         'enabled': True,
         'bind_addr': '0.0.0.0',
         'listen_port': 4557,
@@ -178,6 +181,8 @@ def initialize_gauges(gauges, resources, data):
             print_dbg("Assigned {} to Gauge {} as {}".format(name, gauge_options['sub_type'], type))
             gauge_resources[type] = resources[name]
         gauge = gauge_class(gauge_options, gauge_resources, data)
+        if 'config_bus' in resources:
+            resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
         for field_spec in gauge.subscribed_streams():
             if field_spec not in data:
                 data[field_spec] = {
@@ -195,14 +200,16 @@ def setup_tasks(config, resources, data):
     for data_source, options in config['data_sources'].items():
         if options['enabled']:
             options.pop('enabled')
-            data_source_module = __import__('source_' + data_source)
+            data_source_module = __import__('source_' + options['type'])
+            del options['type']
             if 'config_source' in options and options['config_source']:
                 data_source_class = getattr(data_source_module, 'ConfigSource')
                 options.pop('config_source')
-                data_source_obj = data_source_class(resources, config, **options)
+                resources['config_bus'] = Passy()
+                data_source_obj = data_source_class(data_source, resources, config, **options)
             else:
                 data_source_class = getattr(data_source_module, 'DataSource')
-                data_source_obj = data_source_class(resources, data, **options)
+                data_source_obj = data_source_class(data_source, resources, data, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
     tasks['gauges'] = initialize_gauges(config['gauges'], resources, data)
     return tasks
@@ -297,5 +304,4 @@ def allocate_resources(layout, resources):
 resources = setup_hardware(config['hardware'])
 resources = allocate_resources(config['layout'], resources)
 tasks = setup_tasks(config, resources, data)
-import json
 asynccp.run()
