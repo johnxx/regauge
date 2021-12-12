@@ -9,8 +9,8 @@ def print_dbg(some_string, **kwargs):
         return print(some_string, **kwargs)
 
 class DataSource(ListenServer):
-    def __init__(self, resources, target, bind_addr="0.0.0.0", listen_port=5189, listeners=5, poll_freq=30) -> None:
-        super().__init__(resources, target, bind_addr, listen_port, listeners)
+    def __init__(self, name, resources, target, bind_addr="0.0.0.0", listen_port=5189, listeners=5, poll_freq=30) -> None:
+        super().__init__(name, resources, target, bind_addr, listen_port, listeners)
         
     def handle(self, payload):
         try:

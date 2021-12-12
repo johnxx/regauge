@@ -6,20 +6,25 @@ debug = True
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
-def merge(a, b, path=None):
+
+def merge(a, b, path=None, notifier=None):
     "merges b into a"
     if path is None: path = []
     for key in b:
+        topic = "config." + ".".join(path + [key])
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge(a[key], b[key], path + [str(key)])
+                merge(a[key], b[key], path + [str(key)], notifier)
             elif a[key] == b[key]:
                 pass # same leaf value
             else:
                 a[key] = b[key]
-                # raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+                if notifier:
+                    notifier(topic, a[key])
         else:
             a[key] = b[key]
+            if notifier:
+                notifier(topic, a[key])
     return a
 
 class ConfigSource(ListenServer):
@@ -29,8 +34,9 @@ class ConfigSource(ListenServer):
     HEADERS = 4
     DATA = 5
 
-    def __init__(self, resources, target, bind_addr="0.0.0.0", listen_port=80, listeners=5, poll_freq=5) -> None:
-        super().__init__(resources, target, bind_addr, listen_port, listeners)
+    def __init__(self, name, resources, target, bind_addr="0.0.0.0", listen_port=80, listeners=5, poll_freq=5) -> None:
+        self.msgbus = resources['config_bus']
+        super().__init__(name, resources, target, bind_addr, listen_port, listeners)
         
     def handle(self, payload):
         path = payload[self.PATH]
@@ -44,14 +50,7 @@ class ConfigSource(ListenServer):
         getattr(self, 'handle_{}_{}'.format(method, path[1:]))(headers, res)
         
     def handle_post_config(self, headers, data):
-        # print(headers)
-        # print(json.dumps(data))
-        # print("before:")
-        # print(json.dumps(self.target))
-        merge(self.target, data)
-        # self.target.update(data)
-        # print("after:")
-        # print(json.dumps(self.target))
+        merge(self.target, data, notifier=self.msgbus.pub)
 
     def receive(self, connected_sock):
         payload = {
