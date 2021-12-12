@@ -23,7 +23,7 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.stream_spec = stream_spec
-        self._setup_display(options)
+        self._setup_display()
         self._value = self.stream_spec.min_val
 
         self.update()
@@ -33,7 +33,11 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self._setup_display()
     
-    def _setup_display(self, options):
+    def _setup_display(self):
+
+        for element in self.resources['display_group']:
+            self.resources['display_group'].remove(element)
+
         font = bitmap_font.load_font("/share/fonts/" + self.options['font'])
         if 'lcd_bg' in self.options['effects']:
             if self.options['fmt_string'] == self.default_options['fmt_string']:
