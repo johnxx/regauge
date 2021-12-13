@@ -205,7 +205,7 @@ def setup_tasks(config, resources, data):
             if 'config_source' in options and options['config_source']:
                 data_source_class = getattr(data_source_module, 'ConfigSource')
                 options.pop('config_source')
-                resources['config_bus'] = Passy()
+                resources['config_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, config, **options)
             else:
                 data_source_class = getattr(data_source_module, 'DataSource')

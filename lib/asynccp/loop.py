@@ -310,6 +310,10 @@ class Loop:
             # This task is all done.
             self._debug('task complete')
             pass
+        except RuntimeError as e:
+            if str(e) == "generator raised StopIteration":
+                self._debug('task complete')
+                pass
         finally:
             self._current = None
 
