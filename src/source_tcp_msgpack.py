@@ -11,6 +11,7 @@ def print_dbg(some_string, **kwargs):
 class DataSource(ListenServer):
     def __init__(self, name, resources, target, bind_addr="0.0.0.0", listen_port=5189, listeners=5, poll_freq=30) -> None:
         super().__init__(name, resources, target, bind_addr, listen_port, listeners)
+        self.data_bus = resources['data_bus']
         
     def handle(self, payload):
         try:
@@ -23,11 +24,9 @@ class DataSource(ListenServer):
             if 'value' not in self.target[key] or self.target[key]['value'] != value:
                 print_dbg("Set {} to {}".format(key, value))
                 self.target[key]['value'] = value
-                if 'subs' in self.target[key]:
-                    for sub in self.target[key]['subs']:
-                        print_dbg("Notified subscriber: {}".format(str(sub)))
-                        sub(key)
-        # print(json.dumps(self.target))
+                msg_topic = "data.{}".format(key)
+                self.data_bus.pub(msg_topic, value, auto_send=False)
+        self.data_bus.send_all()
 
     def receive(self, connected_sock):
         recv_buffer = bytearray(8)

@@ -183,12 +183,9 @@ def initialize_gauges(gauges, resources, data):
         gauge = gauge_class(gauge_options, gauge_resources, data)
         if 'config_bus' in resources:
             resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
-        for field_spec in gauge.subscribed_streams():
-            if field_spec not in data:
-                data[field_spec] = {
-                    'subs': []
-                }
-            data[field_spec]['subs'].append(gauge.stream_updated)
+        if 'data_bus' in resources:
+            for field_spec in gauge.subscribed_streams():
+                resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
         gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
     return gauge_tasks
             
@@ -209,6 +206,7 @@ def setup_tasks(config, resources, data):
                 data_source_obj = data_source_class(data_source, resources, config, **options)
             else:
                 data_source_class = getattr(data_source_module, 'DataSource')
+                resources['data_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, data, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
     tasks['gauges'] = initialize_gauges(config['gauges'], resources, data)

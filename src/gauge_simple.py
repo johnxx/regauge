@@ -15,9 +15,11 @@ class SimpleGauge(Gauge):
     def subscribed_streams(self):
         return [self.stream_spec.field_spec]
     
-    def stream_updated(self, field_spec):
-        if self.stream_spec.field_spec == field_spec:
-            self.face.value = int(self.data[field_spec]['value'] * self.stream_spec.units['conversion_factor'])
+    def stream_updated(self, updates):
+        for topic, value in updates:
+            (prefix, field_spec) = topic.split(".")
+            if prefix == 'data' and self.stream_spec.field_spec == field_spec:
+                self.face.value = int(value * self.stream_spec.units['conversion_factor'])
 
     async def update(self):
         self.face.update()
