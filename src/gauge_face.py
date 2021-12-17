@@ -1,11 +1,24 @@
+from my_globals import data
 class GaugeFace:
+
+    @property
+    def subscribed_streams(self):
+        return []
+
     @property
     def value(self):
-        return self._value
+        if hasattr(self, '_value'):
+            return self._value
+        elif self.stream_spec.field_spec in data:
+            return data[self.stream_spec.field_spec]['value']
+        else:
+            return self.stream_spec.min_val
 
     @value.setter
     def value(self, value):
-        if value <= self.stream_spec.max_val and value >= self.stream_spec.min_val:
+        if value == None:
+            del self._value
+        elif value <= self.stream_spec.max_val and value >= self.stream_spec.min_val:
             self._value = value
 
     def _apply_defaults(self, options):
@@ -15,4 +28,7 @@ class GaugeFace:
         return options
 
     def config_updated():
+        pass
+    
+    def update():
         pass

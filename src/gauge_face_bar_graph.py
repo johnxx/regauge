@@ -57,6 +57,10 @@ class Face(GaugeFace):
             self.display_group.append(zero_pixel)
 
         self.update()
+
+    @property
+    def subscribed_streams(self):
+        return [self.stream_spec.field_spec]
     
     def calc_bounding_box(self):
         return ((0,0), (240, 120))
@@ -72,7 +76,6 @@ class Face(GaugeFace):
             self.idx = 0
         if value <= self.stream_spec.max_val and value >= self.stream_spec.min_val:
             self._values[self.idx] = value
-        
 
     @staticmethod
     def format_value(fmt, val):

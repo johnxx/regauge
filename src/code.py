@@ -3,6 +3,7 @@ import asynccp.time as Duration
 import board
 import displayio
 import neopixel_slice
+from my_globals import config, data, resources
 from passy import Passy
 
 debug = True
@@ -10,169 +11,10 @@ def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
 
-hardware = {
-    'wifi': {
-        'enabled': True,
-        'ssid': 'Pequod',
-        'passphrase': 'Call me Ishy.'
-    },
-    'lcd': {
-        'enabled': True,
-        'width': 240,
-        'height': 240,
-        'pins': {
-            'cs': 'D20',
-            'dc': 'D21',
-            'rst': 'D10',
-            'bl': 'D11',
-        }
-    },
-    'leds': {
-        'enabled': True,
-        'number': 16,
-        'brightness': 0.01,
-        'pins': {
-            'data': 'D16'
-        }
-    }
-    
-}
-
-data_sources = {
-    'config_listener': {
-        'type': 'http_json',
-        'enabled': True,
-        'bind_addr': '0.0.0.0',
-        'listen_port': 80,
-        'config_source': True
-
-    },
-    'data_listener': {
-        'type': 'tcp_msgpack',
-        'enabled': True,
-        'bind_addr': '0.0.0.0',
-        'listen_port': 4557,
-        'poll_freq': 10
-    }
-}
-
-gauges = {
-    "fan_speed_leds": {
-        'type': 'simple',
-        'sub_type': 'SimpleGauge',
-        'update_freq': 30,
-        'resources': {
-            'leds': 'right_leds_ccw'
-        },
-        'stream_spec': {
-            'field_spec': 'fan_rpm',
-            'min_val': 0,
-            'max_val': 6000
-        },
-        'gauge_face': {
-            'type': 'multi_led',
-            'normal_color': 0x0000ff,
-            'warning_level': 9999,
-            'critical_level': 9999
-        }
-
-    },
-    "cpu_temp_leds": {
-        'type': 'simple',
-        'sub_type': 'SimpleGauge',
-        'update_freq': 30,
-        'resources': {
-            'leds': 'left_leds_cw'
-        },
-        'stream_spec': {
-            'field_spec': 'cputemp_cel',
-            'min_val': 0,
-            'max_val': 100
-        },
-        'gauge_face': {
-            'type': 'multi_led',
-            'normal_color': 0xff0000,
-            'warning_level': 999,
-            'critical_level': 999
-        }
-
-    },
-    "mem_graph": {
-        'type': 'simple',
-        'sub_type': 'SimpleGauge',
-        'update_freq': 10,
-        'resources': {
-            'display_group': 'lcd_bottom'
-        },
-        'stream_spec': {
-            'field_spec': 'mem_pct',
-            'min_val': 0,
-            'max_val': 100
-        },
-        'gauge_face': {
-            'type': 'bar_graph'
-        }
-    },
-    "cpu_lcd": {
-        'type': 'simple',
-        'sub_type': 'SimpleGauge',
-        'update_freq': 2,
-        'resources': {
-            'display_group': 'lcd_top'
-        },
-        'stream_spec': {
-            'field_spec': 'cpu_pct',
-            'min_val': 0,
-            'max_val': 400
-        },
-        'gauge_face': {
-            'type': 'text'
-        }
-    }
-}
-
-layout = {
-    'lcd_top': {
-        'type': 'display_group',
-        'hw_resource': 'lcd',
-        'x_offset': 0,
-        'y_offset': 0
-    },
-    'lcd_bottom': {
-        'type': 'display_group',
-        'hw_resource': 'lcd', 
-        'x_offset': 0,
-        'y_offset': 120
-    },
-    'left_leds_cw': {
-        'type': 'neopixel_slice',
-        'hw_resource': 'leds',
-        'start': 8,
-        'end': 16,
-        'reverse': True
-    },
-    'right_leds_ccw': {
-        'type': 'neopixel_slice',
-        'hw_resource': 'leds',
-        'start': 0,
-        'end': 8,
-    }
-}
-
-config = {
-    'hardware': hardware,
-    'data_sources': data_sources,
-    'gauges': gauges,
-    'layout': layout
-}
-
-resources = {}
-
-data = {}
-
-def initialize_gauges(gauges, resources, data):
+def initialize_gauges(gauges, resources):
     gauge_tasks = []
     for gauge_name, gauge_options in gauges.items():
+        gauge_options['name'] = gauge_name
         gauge_module = __import__('gauge_' + gauge_options['type'], None, None, [gauge_options['sub_type']])
         gauge_class = getattr(gauge_module, gauge_options['sub_type'])
         # gauge = gauge_class(gauge_options, resources, data)
@@ -180,7 +22,7 @@ def initialize_gauges(gauges, resources, data):
         for type, name in gauge_options['resources'].items():
             print_dbg("Assigned {} to Gauge {} as {}".format(name, gauge_options['sub_type'], type))
             gauge_resources[type] = resources[name]
-        gauge = gauge_class(gauge_options, gauge_resources, data)
+        gauge = gauge_class(gauge_options, gauge_resources)
         if 'config_bus' in resources:
             resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
         if 'data_bus' in resources:
@@ -209,7 +51,7 @@ def setup_tasks(config, resources, data):
                 resources['data_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, data, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
-    tasks['gauges'] = initialize_gauges(config['gauges'], resources, data)
+    tasks['gauges'] = initialize_gauges(config['gauges'], resources)
     return tasks
         
 def setup_hardware(hardware):
@@ -299,7 +141,8 @@ def allocate_resources(layout, resources):
             
     
 
-resources = setup_hardware(config['hardware'])
-resources = allocate_resources(config['layout'], resources)
-tasks = setup_tasks(config, resources, data)
-asynccp.run()
+if __name__ == '__main__':
+    resources = setup_hardware(config['hardware'])
+    resources = allocate_resources(config['layout'], resources)
+    tasks = setup_tasks(config, resources, data)
+    asynccp.run()

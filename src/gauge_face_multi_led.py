@@ -26,8 +26,6 @@ class Face(GaugeFace):
         self.cur_idx = -1
         self.prev_idx = -1
 
-        self._value = self.stream_spec.min_val
-
     def _value_to_segment(self):
         return math.floor((self.value - self.stream_spec.min_val) / self.stream_spec.max_val * (self.pixels.n() - 1))
 

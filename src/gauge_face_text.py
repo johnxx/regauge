@@ -24,7 +24,6 @@ class Face(GaugeFace):
         self.resources = resources
         self.stream_spec = stream_spec
         self._setup_display()
-        self._value = self.stream_spec.min_val
 
         self.update()
     
@@ -53,4 +52,5 @@ class Face(GaugeFace):
         self.resources['display_group'].append(self.text_area)
     
     def update(self):
+        # print(self.value)
         self.text_area.text = self.options['fmt_string'].format(self.value)

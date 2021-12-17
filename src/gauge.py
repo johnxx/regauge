@@ -1,8 +1,7 @@
 class Gauge():
-    def __init__(self, options, resources, data) -> None:
+    def __init__(self, options, resources) -> None:
         self.options = options
         self.resources = resources
-        self.data = data
 
     def subscribed_streams(self):
         return set()
