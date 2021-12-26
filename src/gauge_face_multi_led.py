@@ -23,6 +23,8 @@ class Face(GaugeFace):
         self.resources = resources
         self.pixels = resources['leds']
 
+        self.pixels.fill(self.options['off_color'])
+
         self.cur_idx = -1
         self.prev_idx = -1
 
@@ -40,7 +42,7 @@ class Face(GaugeFace):
     def config_updated(self, options):
         self.options = self._apply_defaults(options)
         print("Color set to: {}".format(self.options['normal_color']))
-        self.prev_idx = 0
+        self.pixels.fill(self.options['off_color'])
         self.update()
 
 

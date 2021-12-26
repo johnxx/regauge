@@ -2,7 +2,7 @@
 from asynccp.time import Duration
 from functools import partial
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)

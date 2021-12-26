@@ -9,18 +9,19 @@ hardware = {
         'width': 240,
         'height': 240,
         'pins': {
-            'cs': 'D20',
-            'dc': 'D21',
-            'rst': 'D10',
-            'bl': 'D11',
+            'cs': 'D9',
+            'dc': 'D18',
+            'rst': 'D19',
+            'bl': 'D6',
         }
     },
     'leds': {
         'enabled': True,
         'number': 16,
+        'order': 'GRBW',
         'brightness': 0.01,
         'pins': {
-            'data': 'D16'
+            'data': 'D20'
         }
     }
     
@@ -37,10 +38,18 @@ data_sources = {
     },
     'data_listener': {
         'type': 'tcp_msgpack',
-        'enabled': True,
+        'enabled': False,
         'bind_addr': '0.0.0.0',
         'listen_port': 4557,
         'poll_freq': 10
+    },
+    'data_mock': {
+        'type': 'mock',
+        'enabled': True,
+    },
+    'data_uart': {
+        'type': 'uart',
+        'enabled': True,
     }
 }
 

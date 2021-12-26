@@ -102,10 +102,16 @@ def setup_hardware(hardware):
         led_cfg = hardware['leds']
         import neopixel
 
+        if 'order' in led_cfg and led_cfg['order'] == 'GRBW':
+            order = neopixel.GRBW
+        else:
+            order = neopixel.GRB
+        
         leds = neopixel.NeoPixel(
             getattr(board, led_cfg['pins']['data']),
             led_cfg['number'],
-            brightness=led_cfg['brightness']
+            brightness=led_cfg['brightness'],
+            pixel_order=order
         )
 
         resources['leds'] = leds
