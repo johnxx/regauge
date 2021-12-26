@@ -25,8 +25,7 @@ class Face(GaugeFace):
 
         self.pixels.fill(self.options['off_color'])
 
-        self.cur_idx = -1
-        self.prev_idx = -1
+        self.prev_idx = 0
 
     def _value_to_segment(self):
         return math.floor((self.value - self.stream_spec.min_val) / self.stream_spec.max_val * (self.pixels.n() - 1))
@@ -43,6 +42,7 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         print("Color set to: {}".format(self.options['normal_color']))
         self.pixels.fill(self.options['off_color'])
+        self.prev_idx = 0
         self.update()
 
 

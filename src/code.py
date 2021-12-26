@@ -34,7 +34,7 @@ def initialize_gauges(gauges, resources):
 def setup_tasks(config, resources, data):
     tasks = {
         'data_sources': {},
-        'gauges': []
+        'gauges': [],
     }
     for data_source, options in config['data_sources'].items():
         if options['enabled']:
@@ -86,8 +86,14 @@ def setup_hardware(hardware):
             display_bus,
             width=lcd_cfg['width'],
             height=lcd_cfg['height'],
+            auto_refresh=False,
             backlight_pin=getattr(board, lcd_cfg['pins']['bl'])
         )
+        async def lcd_update():
+            return lcd.refresh()
+
+        global_framerate = 30
+        display_update = asynccp.schedule(frequency=global_framerate, coroutine_function=lcd_update)
         main_context = displayio.Group()
         lcd.show(main_context)
 
