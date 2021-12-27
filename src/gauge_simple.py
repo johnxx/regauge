@@ -2,7 +2,7 @@ from gauge import Gauge
 from stream_spec import StreamSpec
 import time
 
-instrumentation = True
+instrumentation = False
 
 class SimpleGauge(Gauge):
     def __init__(self, options, resources) -> None:

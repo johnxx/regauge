@@ -79,7 +79,7 @@ def setup_hardware(hardware):
         while not spi.try_lock():
             pass
         # spi.configure(baudrate=24000000) # Configure SPI for 24MHz
-        spi.configure(baudrate=40000000) # Configure SPI for 24MHz
+        spi.configure(baudrate=80000000) # Configure SPI for 24MHz
         spi.unlock()
 
         # Release any currently in-use displays for good measure
