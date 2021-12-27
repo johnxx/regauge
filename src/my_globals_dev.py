@@ -44,7 +44,8 @@ data_sources = {
     },
     'data_mock': {
         'type': 'mock',
-        'poll_freq': 30,
+        'poll_freq': 10,
+        'send_frame_ids': [0x999],
         'enabled': True,
     },
 }

@@ -1,4 +1,5 @@
 import time
+import math
 
 debug = False
 def print_dbg(some_string, **kwargs):
@@ -35,8 +36,8 @@ class DataSource():
             "cpu_pct": {
                 "min": 0,
                 "max": 100,
-                "pattern": "zigzag",
-                "increment": 1,
+                "pattern": "sin",
+                "increment": 0.25,
                 "every": 1
             },
             "mem_pct": {
@@ -63,7 +64,16 @@ class DataSource():
         })
     ]
 
-    def __init__(self, name, resources, target, poll_freq=5) -> None:
+    @staticmethod
+    def _get_frame_id(mock_frame):
+        print_dbg("Adding: {}".format(mock_frame[0]))
+        return mock_frame[0]
+
+    def __init__(self, name, resources, target, poll_freq=5, send_frame_ids='all') -> None:
+        if send_frame_ids == 'all':
+            self.send_frame_ids = list(map(self._get_frame_id, self.mock_frames))
+        else:
+            self.send_frame_ids = send_frame_ids
         self.target = target
         self._poll_freq = poll_freq
         self.data_bus = resources['data_bus']
@@ -71,6 +81,7 @@ class DataSource():
 
     @property
     def poll_freq(self):
+        print_dbg("Poll freq: {}".format(self._poll_freq))
         return self._poll_freq
 
 
@@ -92,6 +103,17 @@ class DataSource():
         else:
             prev['frames'] += 1
         return prev
+    
+    @staticmethod
+    def sin(prev):
+        if 'x' not in prev:
+            prev['x'] = 0
+        else:
+            prev['x'] += prev['increment']
+        prev['value'] = (((math.sin(prev['x'])+1) - prev['min']) / prev['max']) * 100 * prev['max']
+        # print(prev['value'])
+        return prev
+        
         
     def process_mock_frame(self, frame):
         id = frame[0]
@@ -101,13 +123,25 @@ class DataSource():
             if contents['pattern'] == 'zigzag':
                 # print("Calling zigzag for {}".format(name))
                 contents = self.zigzag(contents)
+            elif contents['pattern'] == 'sin':
+                contents = self.sin(contents)
             payload[name] = contents['value']
             # print(name)
             # print(json.dumps(contents))
         return id, payload
+    
+    def _advance_frame(self):
+        num_frames = len(self.mock_frames)
+        self.frame_idx += 1
+        if self.frame_idx == num_frames:
+           self.frame_idx = 0
         
     async def poll(self):
-        num_frames = len(self.mock_frames)
+        while self.mock_frames[self.frame_idx][0] not in self.send_frame_ids:
+            print_dbg("Current id: {}, not in {}".format(self.mock_frames[self.frame_idx][0], self.send_frame_ids))
+            self._advance_frame()
+            print_dbg("Advanced to {}".format(self.frame_idx))
+
         res = self.process_mock_frame(self.mock_frames[self.frame_idx])
         payload = res[1]
         for key, value in payload.items():
@@ -120,6 +154,4 @@ class DataSource():
                 self.data_bus.pub(msg_topic, value, auto_send=False)
         self.data_bus.send_all()
 
-        self.frame_idx += 1
-        if self.frame_idx == num_frames:
-           self.frame_idx = 0
+        self._advance_frame()

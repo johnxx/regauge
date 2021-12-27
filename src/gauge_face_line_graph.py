@@ -4,7 +4,7 @@ import displayio
 import math
 import time
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -17,7 +17,10 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.display_group = resources['display_group']
-
+        self.dots = displayio.Group()
+        self.lines = displayio.Group()
+        self.display_group.append(self.lines)
+        self.display_group.append(self.dots)
         
         self.palette = displayio.Palette(1) 
         self.palette[0] = 0xFF0000
@@ -64,14 +67,18 @@ class Face(GaugeFace):
     def pick_y(self, v):
         return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
 
-    def update(self):
+    def _trim_sprites(self, display_group):
         n = 0
-        for i in self.display_group:
-            self.display_group.remove(i)
+        for s in display_group:
+            display_group.remove(s)
             n += 1
             if n > self.num_seg_x:
                 print_dbg("Trimming total sprites")
                 break
+        
+    def update(self):
+        self._trim_sprites(self.lines)
+        self._trim_sprites(self.dots)
             
         x = y = 0
         prev_x = -1
@@ -82,8 +89,12 @@ class Face(GaugeFace):
             # print_dbg("{} -> {}".format(v, y))
             # print_dbg("Drawing to {}x{}".format(x, y))
             graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
-            self.display_group.append(graph_pixel)
+            self.dots.append(graph_pixel)
             if prev_x >= 0:
                 # @TODO: Draw the rest of the horse
-                line_conn = line.Line
-        print_dbg("print_dbged up to: {}x{}".format(x,y))
+                line_conn = line.Line(x0=prev_x, y0=prev_y, x1=x, y1=y, color=self.palette[0])
+                self.lines.append(line_conn)
+            prev_x = x
+            prev_y = y
+        print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
+        # print_dbg("print_dbged up to: {}x{}".format(x,y))

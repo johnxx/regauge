@@ -3,10 +3,12 @@ import asynccp.time as Duration
 import board
 import displayio
 import neopixel_slice
+import time
 from my_globals import config, data, resources
 from passy import Passy
 
-debug = True
+instrumentation = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -73,11 +75,18 @@ def setup_hardware(hardware):
         import displayio
         import gc9a01
 
+        spi = board.SPI()
+        while not spi.try_lock():
+            pass
+        # spi.configure(baudrate=24000000) # Configure SPI for 24MHz
+        spi.configure(baudrate=40000000) # Configure SPI for 24MHz
+        spi.unlock()
+
         # Release any currently in-use displays for good measure
         displayio.release_displays()
 
         display_bus = displayio.FourWire(
-            board.SPI(),
+            spi,
             command=getattr(board, lcd_cfg['pins']['dc']),
             chip_select=getattr(board, lcd_cfg['pins']['cs']),
             reset=getattr(board, lcd_cfg['pins']['rst'])
@@ -90,10 +99,18 @@ def setup_hardware(hardware):
             backlight_pin=getattr(board, lcd_cfg['pins']['bl'])
         )
         async def lcd_update():
-            return lcd.refresh()
+            if instrumentation:
+                start_time = time.monotonic()
+            lcd.refresh()
+            if instrumentation:
+                end_time = time.monotonic()
+                total = end_time - start_time
+                print("{} took {}s".format('lcd refresh', total))
 
-        global_framerate = 30
-        display_update = asynccp.schedule(frequency=global_framerate, coroutine_function=lcd_update)
+
+        if not lcd.auto_refresh:
+            global_framerate = 30
+            display_update = asynccp.schedule(frequency=global_framerate, coroutine_function=lcd_update)
         main_context = displayio.Group()
         lcd.show(main_context)
 
