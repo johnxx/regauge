@@ -1,4 +1,6 @@
+from adafruit_bitmap_font import bitmap_font
 from adafruit_display_shapes import line
+from adafruit_display_text.label import Label
 from gauge_face import GaugeFace
 import displayio
 import math
@@ -10,7 +12,31 @@ def print_dbg(some_string, **kwargs):
         return print(some_string, **kwargs)
 
 class Face(GaugeFace):
-    default_options = {}
+    default_options = {
+        'label_font': 'UpheavalTT-BRK--20.bdf',
+        'font_color':0xCCCCCC, 
+        'graph_line_color': 0x0066AA,
+        'top_line_color':0x666666, 
+        'bottom_line_color':0x666666, 
+        'fmt_string': "{:>3.0f}", 
+        'label_offset_x': 120, 
+        'label_offset_y': 60, 
+    }
+
+    def _setup_display(self):
+        font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
+        self.text_top = Label(font, text='', color=self.options['font_color'], scale=1,
+                                anchor_point=(0.5, 1), anchored_position=(self.options['label_offset_x'], self.options['label_offset_y']))
+        self.display_group.append(self.text_top)
+        self.top_line = line.Line(x0=0, y0=0, x1=self.width, y1=0, color=self.options['bottom_line_color'])
+        self.display_group.append(self.top_line)
+
+        self.text_bottom = Label(font, text='', color=self.options['font_color'], scale=1,
+                                anchor_point=(0.5, 0), anchored_position=(self.options['label_offset_x'], self.options['label_offset_y']))
+        self.display_group.append(self.text_bottom)
+        self.bottom_line = line.Line(x0=0, y0=self.height, x1=self.width, y1=self.height, color=self.options['bottom_line_color'])
+        self.display_group.append(self.bottom_line)
+
 
     def __init__(self, stream_spec, options, resources) -> None:
         self.stream_spec = stream_spec
@@ -21,9 +47,10 @@ class Face(GaugeFace):
         self.lines = displayio.Group()
         self.display_group.append(self.lines)
         self.display_group.append(self.dots)
-        
+
+         
         self.palette = displayio.Palette(1) 
-        self.palette[0] = 0xFF0000
+        self.palette[0] = self.options['graph_line_color']
 
         cell_fg = displayio.Bitmap(1, 1, 1)
         self.sprite = displayio.Bitmap(1, 1, 1)
@@ -36,13 +63,18 @@ class Face(GaugeFace):
         self.width = 240
         self.height = 120
         
-        self.margin_top = 60
-        self.margin_bottom = 40
+        self.margin_top = 65
+        self.margin_bottom = 20
 
         self._values = []
         
         self.last_x = 0
         self.last_y = 0
+
+        self.max_value = 0
+        self.min_value = 0
+
+        self._setup_display()
 
     @property
     def num_seg_x(self):
@@ -63,9 +95,14 @@ class Face(GaugeFace):
     @value.setter
     def value(self, value):
         self._values.append(value)
-        if len(self._values) > self.num_seg_y:
+        if value < self.min_value:
+            self.min_value = value
+        elif value > self.max_value:
+            self.max_value = value
+        if len(self._values) > self.num_seg_x:
             print_dbg("Truncate")
             del self._values[:-self.num_seg_x]
+                
         
     def pick_x(self, v):
         return math.floor(self.last_x+self.seg_x)
@@ -73,19 +110,10 @@ class Face(GaugeFace):
     def pick_y(self, v):
         return (self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
-    def pick_y_full(self, v):
-        return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
+    # no margins
+    # def pick_y(self, v):
+    #     return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
 
-    def _trim_sprites(self, display_group):
-        n = 0
-        for s in display_group:
-            print_dbg("Removed a sprite at: {}x{}".format(s.x, s.y))
-            display_group.remove(s)
-            n += 1
-            if n > self.num_seg_x:
-                print_dbg("Trimming total sprites")
-                break
-        
     def update(self):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
@@ -98,11 +126,17 @@ class Face(GaugeFace):
             print_dbg("Drawing {}, {} to {}x{}".format(i, v, x, y))
             graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
             self.dots.append(graph_pixel)
-            # @TODO: Draw the rest of the horse
             line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])
             self.lines.append(line_conn)
+
             self.last_x = x
             self.last_y = y
+
+            if v < self.min_value:
+                self.min_value = v
+            elif v > self.max_value:
+                self.max_value = v
+
             added += 1
         if len(self.lines) > self.num_seg_x:
             # print("last x was: {}".format(self.last_x))
@@ -122,7 +156,30 @@ class Face(GaugeFace):
                 if s.x < 0:
                     print_dbg("Removed dot at {}x{}".format(s.x, s.y))
                     self.dots.remove(s)
+
+        min_y = self.pick_y(self.min_value)
+        self.bottom_line.y = min_y
+        self.text_bottom.text = self.options['fmt_string'].format(self.min_value)
+        new_min = (self.text_bottom.anchored_position[0], min_y)
+        self.text_bottom.anchored_position = new_min
+
+        max_y = self.pick_y(self.max_value)
+        self.top_line.y = max_y
+        self.text_top.text = self.options['fmt_string'].format(self.max_value)
+        new_max = (self.text_top.anchored_position[0], max_y)
+        self.text_top.anchored_position = new_max
         
+        # @TODO: Make max/min update correctly
+        for v in self._values:
+            if v == self.max_value:
+                for n in self._values:
+                    if n > self.max_value:
+                        self.max_value = n
+            if v == self.min_value:
+                for n in self._values:
+                    if n < self.min_value:
+                        self.min_value = n
+
         self._values = []
         print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
         print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))

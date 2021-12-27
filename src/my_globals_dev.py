@@ -94,7 +94,7 @@ gauges = {
     "mem_graph": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 1,
+        'update_freq': 3,
         'resources': {
             'display_group': 'lcd_bottom'
         },
@@ -104,7 +104,7 @@ gauges = {
             'max_val': 100
         },
         'gauge_face': {
-            'type': 'bar_graph'
+            'type': 'text'
         }
     },
     "cpu_lcd": {

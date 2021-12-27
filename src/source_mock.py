@@ -37,7 +37,7 @@ class DataSource():
                 "min": 0,
                 "max": 100,
                 "pattern": "sin",
-                "increment": 0.25,
+                "increment": 0.01,
                 "every": 1
             },
             "mem_pct": {

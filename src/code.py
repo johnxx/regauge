@@ -7,7 +7,7 @@ import time
 from my_globals import config, data, resources
 from passy import Passy
 
-instrumentation = True
+instrumentation = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
