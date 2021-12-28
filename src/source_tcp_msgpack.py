@@ -3,7 +3,7 @@ from tcp_server import ListenServer
 import json
 import msgpack
 
-debug = False
+debug = True
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)

@@ -37,7 +37,7 @@ data_sources = {
     },
     'data_listener': {
         'type': 'tcp_msgpack',
-        'enabled': False,
+        'enabled': True,
         'bind_addr': '0.0.0.0',
         'listen_port': 4557,
         'poll_freq': 10
@@ -46,7 +46,7 @@ data_sources = {
         'type': 'mock',
         'poll_freq': 10,
         'send_frame_ids': [0x999],
-        'enabled': True,
+        'enabled': False,
     },
 }
 

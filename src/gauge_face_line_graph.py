@@ -67,6 +67,7 @@ class Face(GaugeFace):
         self.margin_bottom = 20
 
         self._values = []
+        self.history = []
         
         self.last_x = 0
         self.last_y = 0
@@ -99,16 +100,14 @@ class Face(GaugeFace):
             self.min_value = value
         elif value > self.max_value:
             self.max_value = value
-        if len(self._values) > self.num_seg_x:
-            print_dbg("Truncate")
-            del self._values[:-self.num_seg_x]
                 
         
     def pick_x(self, v):
         return math.floor(self.last_x+self.seg_x)
         
     def pick_y(self, v):
-        return (self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
+        as_pct = (v - self.stream_spec.min_val) / self.stream_spec.max_val
+        return (self.height - math.floor(as_pct*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
     # no margins
     # def pick_y(self, v):
@@ -169,17 +168,16 @@ class Face(GaugeFace):
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
         
-        # @TODO: Make max/min update correctly
-        for v in self._values:
+        self.history.extend(self._values)
+        for v in self.history[:-self.num_seg_x]:
+            # print("history: {}".format(v))
+            self.history.remove(v)
             if v == self.max_value:
-                for n in self._values:
-                    if n > self.max_value:
-                        self.max_value = n
+                # print("old max removed: {}".format(v))
+                self.max_value = max(self.history)
             if v == self.min_value:
-                for n in self._values:
-                    if n < self.min_value:
-                        self.min_value = n
-
+                # print("old min removed: {}".format(v))
+                self.min_value = min(self.history)
         self._values = []
         print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
         print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))
