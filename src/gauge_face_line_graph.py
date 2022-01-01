@@ -13,7 +13,8 @@ def print_dbg(some_string, **kwargs):
 
 class Face(GaugeFace):
     default_options = {
-        'label_font': 'UpheavalTT-BRK--20.bdf',
+        # 'label_font': 'UpheavalTT-BRK--20.bdf',
+        'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
         'font_color':0xCCCCCC, 
         'graph_line_color': 0x0066AA,
         'top_line_color':0x666666, 
