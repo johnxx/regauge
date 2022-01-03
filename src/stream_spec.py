@@ -5,6 +5,11 @@ class StreamSpec():
             'suffix': '/m',
             'conversion_factor': 1
         },
+        'number': {
+            'name': 'number',
+            'suffix': '',
+            'conversion_factor': 1
+        },
         'pct': {
             'name': 'percent',
             'suffix': '%',
@@ -18,7 +23,8 @@ class StreamSpec():
         'emu_oilpres': {
             'name': 'lb/in^2',
             'suffix': 'psi',
-            'conversion_factor': 0.0625
+            'conversion_factor': 1
+            # 'conversion_factor': 0.0625
         },
     }
 
@@ -36,4 +42,4 @@ class StreamSpec():
             if unit_guess in self.base_units:
                 self.units = self.base_units[unit_guess]
             else:
-                self.units = self.base_units['pct']
+                self.units = self.base_units['number']

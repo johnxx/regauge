@@ -1,8 +1,10 @@
 hardware = {
     'wifi': {
         'enabled': True,
-        'ssid': 'Pequod',
-        'passphrase': 'Call me Ishy.'
+        'ssid': 'Fern MP2.4',
+        'passphrase': '82Kdfnsz'
+        # 'ssid': 'Pequod',
+        # 'passphrase': 'Call me Ishy.'
     },
     'lcd': {
         'enabled': True,
@@ -117,7 +119,7 @@ gauges = {
         'stream_spec': {
             'field_spec': 'cpu_pct',
             'min_val': 0,
-            'max_val': 100
+            'max_val': 199
         },
         'gauge_face': {
             'type': 'line_graph'

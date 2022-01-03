@@ -4,6 +4,9 @@ import board
 import displayio
 import neopixel_slice
 import time
+from adafruit_bitmap_font import bitmap_font
+from adafruit_display_shapes import line
+from adafruit_display_text.label import Label
 from my_globals import config, data, resources
 from passy import Passy
 
@@ -166,6 +169,36 @@ def allocate_resources(layout, resources):
         elif config['type'] == 'display_group':
             resources[name] = displayio.Group(x=config['x_offset'], y=config['y_offset'])
             resources[config['hw_resource']]['main_context'].append(resources[name])
+
+    # @TODO: Overlay HACK!
+    overlay_color = 0x0099FF
+
+    overlay = displayio.Group()
+    resources[config['hw_resource']]['main_context'].append(overlay)
+    mid_line = line.Line(x0=0, y0=120, x1=240, y1=120, color=overlay_color)
+    overlay.append(mid_line)
+
+    font_name = 'Cloude_Regular_Bold_1.02-32.bdf'
+    font = bitmap_font.load_font("/share/fonts/" + font_name)
+
+    text_top = Label(font, text='Coolant', color=overlay_color, scale=1, anchor_point=(0, 1), anchored_position=(10, 120))
+    overlay.append(text_top)
+
+    text_bottom = Label(font, text='Oil Pressure', color=overlay_color, scale=1, anchor_point=(1, 0), anchored_position=(230, 120))
+    overlay.append(text_bottom)
+
+    bottom_line = line.Line(x0=0, y0=225, x1=240, y1=225, color=overlay_color)
+    overlay.append(bottom_line)
+
+    leds_text_bottom = Label(font, text='RPM', color=overlay_color, scale=1, anchor_point=(0.5, 1), anchored_position=(120, 235))
+    overlay.append(leds_text_bottom)
+
+    top_line = line.Line(x0=0, y0=15, x1=240, y1=15, color=overlay_color)
+    overlay.append(top_line)
+
+    leds_text_top = Label(font, text='AFR', color=overlay_color, scale=1, anchor_point=(0.5, 0), anchored_position=(120, 5))
+    overlay.append(leds_text_top)
+
     return resources
             
     

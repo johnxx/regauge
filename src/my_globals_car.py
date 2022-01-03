@@ -1,6 +1,6 @@
 hardware = {
     'wifi': {
-        'enabled': True,
+        'enabled': False,
         'ssid': 'SomethingClever',
         'passphrase': '<redacted>'
     },
@@ -30,7 +30,7 @@ hardware = {
 data_sources = {
     'config_listener': {
         'type': 'http_json',
-        'enabled': True,
+        'enabled': False,
         'bind_addr': '0.0.0.0',
         'listen_port': 80,
         'config_source': True
@@ -45,72 +45,72 @@ data_sources = {
     },
     'data_mock': {
         'type': 'mock',
+        'poll_freq': 30,
         'enabled': True,
     },
     'data_uart': {
         'type': 'uart',
-        'enabled': True,
+        'enabled': False,
     }
 }
 
 gauges = {
-    "fan_speed_leds": {
+    "afr_leds": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 30,
+        'update_freq': 5,
         'resources': {
             'leds': 'right_leds_ccw'
         },
         'stream_spec': {
-            'field_spec': 'fan_rpm',
+            'field_spec': 'wbo_lam',
             'min_val': 0,
-            'max_val': 6000
+            'max_val': 1
         },
         'gauge_face': {
             'type': 'multi_led',
-            'normal_color': 0x0000ff,
-            'warning_level': 9999,
-            'critical_level': 9999
+            'warning_level': 0.5,
+            'critical_level': 0.75
         }
 
     },
-    "cpu_temp_leds": {
+    "rpm_leds": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 30,
+        'update_freq': 5,
         'resources': {
             'leds': 'left_leds_cw'
         },
         'stream_spec': {
-            'field_spec': 'cputemp_cel',
+            'field_spec': 'eng_rpm',
             'min_val': 0,
-            'max_val': 100
+            'max_val': 7500
         },
         'gauge_face': {
             'type': 'multi_led',
-            'normal_color': 0xff0000,
-            'warning_level': 999,
-            'critical_level': 999
+            'warning_level': 6000,
+            'critical_level': 7000
         }
 
     },
-    "mem_graph": {
+    "oil_graph": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 10,
+        'update_freq': 30,
         'resources': {
             'display_group': 'lcd_bottom'
         },
         'stream_spec': {
-            'field_spec': 'mem_pct',
+            'field_spec': 'oilpres_psi',
+            'units': 'emu_oilpres',
             'min_val': 0,
-            'max_val': 100
+            'max_val': 115
         },
         'gauge_face': {
-            'type': 'bar_graph'
+            'type': 'line_graph'
         }
     },
-    "cpu_lcd": {
+    "clt_lcd": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
         'update_freq': 2,
@@ -118,9 +118,9 @@ gauges = {
             'display_group': 'lcd_top'
         },
         'stream_spec': {
-            'field_spec': 'cpu_pct',
+            'field_spec': 'clt_cel',
             'min_val': 0,
-            'max_val': 400
+            'max_val': 160
         },
         'gauge_face': {
             'type': 'text'
@@ -144,15 +144,15 @@ layout = {
     'left_leds_cw': {
         'type': 'neopixel_slice',
         'hw_resource': 'leds',
-        'start': 8,
-        'end': 16,
-        'reverse': True
+        'start': 4,
+        'end': 12,
     },
     'right_leds_ccw': {
         'type': 'neopixel_slice',
         'hw_resource': 'leds',
-        'start': 0,
-        'end': 8,
+        'start': -4,
+        'end': 4,
+        'reverse': True
     }
 }
 

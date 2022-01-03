@@ -19,7 +19,7 @@ class Face(GaugeFace):
         'graph_line_color': 0x0066AA,
         'top_line_color':0x666666, 
         'bottom_line_color':0x666666, 
-        'fmt_string': "{:>3.0f}", 
+        'fmt_string': "{:>3.0f}{}", 
         'label_offset_x': 120, 
         'label_offset_y': 60, 
     }
@@ -64,8 +64,8 @@ class Face(GaugeFace):
         self.width = 240
         self.height = 120
         
-        self.margin_top = 65
-        self.margin_bottom = 20
+        self.margin_top = 10
+        self.margin_bottom = 30
 
         self._values = []
         self.history = []
@@ -108,6 +108,7 @@ class Face(GaugeFace):
         
     def pick_y(self, v):
         as_pct = (v - self.stream_spec.min_val) / self.stream_spec.max_val
+        # print("Showing value {} as pct {}".format(v, as_pct))
         return (self.height - math.floor(as_pct*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
     # no margins
@@ -159,13 +160,13 @@ class Face(GaugeFace):
 
         min_y = self.pick_y(self.min_value)
         self.bottom_line.y = min_y
-        self.text_bottom.text = self.options['fmt_string'].format(self.min_value)
+        self.text_bottom.text = self.options['fmt_string'].format(self.min_value, self.stream_spec.units['suffix'])
         new_min = (self.text_bottom.anchored_position[0], min_y)
         self.text_bottom.anchored_position = new_min
 
         max_y = self.pick_y(self.max_value)
         self.top_line.y = max_y
-        self.text_top.text = self.options['fmt_string'].format(self.max_value)
+        self.text_top.text = self.options['fmt_string'].format(self.max_value, self.stream_spec.units['suffix'])
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
         

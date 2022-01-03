@@ -5,10 +5,10 @@ from gauge_face import GaugeFace
 class Face(GaugeFace):
 
     default_options = {
-        'font': 'LanterosySansSerif-liter-100.pcf',
+        'font': 'LanterosySansSerif-lite-100.bdf',
         'font_color':0xCCCCCC, 
-        'fmt_string': "{:>3.0f}", 
-        'offset_x': 180, 
+        'fmt_string': "{:>3.0f}{}", 
+        'offset_x': 210, 
         'offset_y': 80, 
         'effects': []
         
@@ -53,4 +53,4 @@ class Face(GaugeFace):
     
     def update(self):
         # print(self.value)
-        self.text_area.text = self.options['fmt_string'].format(self.value)
+        self.text_area.text = self.options['fmt_string'].format(self.value, self.stream_spec.units['suffix'])
