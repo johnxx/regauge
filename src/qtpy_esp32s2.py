@@ -1,27 +1,28 @@
 hardware = {
     'wifi': {
-        'enabled': False,
-        'ssid': 'SomethingClever',
-        'passphrase': '<redacted>'
+        'enabled': True,
+        'ssid': 'Fern MP2.4',
+        'passphrase': '82Kdfnsz'
+        # 'ssid': 'Pequod',
+        # 'passphrase': 'Call me Ishy.'
     },
     'lcd': {
         'enabled': True,
         'width': 240,
         'height': 240,
         'pins': {
-            'cs': 'D9',
-            'dc': 'D18',
-            'rst': 'D19',
-            'bl': 'D6',
+            'cs': 'A0',
+            'dc': 'A1',
+            'rst': 'A2',
+            'bl': 'A3',
         }
     },
     'leds': {
         'enabled': True,
         'number': 16,
-        'order': 'GRBW',
         'brightness': 0.01,
         'pins': {
-            'data': 'D20'
+            'data': 'SDA'
         }
     }
     
@@ -30,7 +31,7 @@ hardware = {
 data_sources = {
     'config_listener': {
         'type': 'http_json',
-        'enabled': False,
+        'enabled': True,
         'bind_addr': '0.0.0.0',
         'listen_port': 80,
         'config_source': True
@@ -46,87 +47,82 @@ data_sources = {
     'data_mock': {
         'type': 'mock',
         'poll_freq': 30,
+        'send_frame_ids': [0x999],
         'enabled': True,
     },
-    'data_uart': {
-        'type': 'uart',
-        'poll_freq': 60,
-        'enabled': False,
-    }
 }
 
 gauges = {
-    "afr_leds": {
+    "fan_speed_leds": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 15,
+        'update_freq': 5,
         'resources': {
             'leds': 'right_leds_ccw'
         },
         'stream_spec': {
-            'field_spec': 'o2_lambda',
-            'min_val': 0.7,
-            'max_val': 1.3
+            'field_spec': 'fan_rpm',
+            'min_val': 0,
+            'max_val': 6000
         },
         'gauge_face': {
             'type': 'multi_led',
-            'normal_color': 0x00FFFF,
-            'warning_color': 0xFF00FF,
-            'warning_level': 1.05,
-            'critical_level': 1.1
+            'normal_color': 0x0000ff,
+            'warning_level': 9999,
+            'critical_level': 9999
         }
 
     },
-    "rpm_leds": {
+    "cpu_temp_leds": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 15,
+        'update_freq': 5,
         'resources': {
             'leds': 'left_leds_cw'
         },
         'stream_spec': {
-            'field_spec': 'eng_rpm',
+            'field_spec': 'cputemp_cel',
             'min_val': 0,
-            'max_val': 7500
+            'max_val': 100
         },
         'gauge_face': {
             'type': 'multi_led',
-            'warning_level': 6000,
-            'critical_level': 7000
+            'normal_color': 0xff0000,
+            'warning_level': 999,
+            'critical_level': 999
         }
 
     },
-    "oil_graph": {
+    "mem_graph": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 30,
+        'update_freq': 3,
         'resources': {
             'display_group': 'lcd_bottom'
         },
         'stream_spec': {
-            'field_spec': 'oilpres_psi',
-            'units': 'emu_oilpres',
+            'field_spec': 'mem_pct',
             'min_val': 0,
-            'max_val': 115
+            'max_val': 100
         },
         'gauge_face': {
-            'type': 'line_graph'
+            'type': 'text'
         }
     },
-    "clt_lcd": {
+    "cpu_lcd": {
         'type': 'simple',
         'sub_type': 'SimpleGauge',
-        'update_freq': 2,
+        'update_freq': 30,
         'resources': {
             'display_group': 'lcd_top'
         },
         'stream_spec': {
-            'field_spec': 'clt_cel',
+            'field_spec': 'cpu_pct',
             'min_val': 0,
-            'max_val': 160
+            'max_val': 199
         },
         'gauge_face': {
-            'type': 'text'
+            'type': 'line_graph'
         }
     }
 }
@@ -147,15 +143,15 @@ layout = {
     'left_leds_cw': {
         'type': 'neopixel_slice',
         'hw_resource': 'leds',
-        'start': 0,
-        'end': 8,
+        'start': 8,
+        'end': 16,
+        'reverse': True
     },
     'right_leds_ccw': {
         'type': 'neopixel_slice',
         'hw_resource': 'leds',
-        'start': 8,
-        'end': 16,
-        'reverse': True
+        'start': 0,
+        'end': 8,
     }
 }
 

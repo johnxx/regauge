@@ -4,8 +4,17 @@ import struct
 # import time
 
 debug = False
-def print_dbg(some_string, **kwargs):
-    if debug:
+debug1 = False
+debug2 = False
+debug3 = False
+def print_dbg3(some_string, **kwargs):
+    if debug3:
+        return print(some_string, **kwargs)
+def print_dbg2(some_string, **kwargs):
+    if debug2:
+        return print(some_string, **kwargs)
+def print_dbg1(some_string, **kwargs):
+    if debug1:
         return print(some_string, **kwargs)
 
 # uart = busio.UART(board.TX, board.RX, baudrate=115200)
@@ -16,6 +25,7 @@ class DataSource():
         # 1536: "<HBbHH"
         0x600: "<HBbHH",
         0x602: "<HBBBBH",
+        0x603: "<BBBBHH",
         0x604: "<BbHHBB",
         0x900: "<BBBBBBBB"
         # 1536: "<hhhbbh"
@@ -24,6 +34,7 @@ class DataSource():
     fields = {
         0x600: ['eng_rpm', 'tps_pct', 'iat_cel', 'map_kpa', 'injpw_ms'],
         0x602: ['vss_kmh', 'baro_kpa', 'oiltemp_cel', 'oilpres_psi', 'fuelpres_kpa', 'clt_cel'],
+        0x603: ['ignadv_deg', 'igndwell_ms', 'o2_lambda', 'egocor_pct', 'egt1_cel', 'egt2_cel'],
         0x604: ['gear_num', 'ecutemp_cel', 'batt_volts', 'cel_bits', 'flags_bits', 'ethcont_pct'],
         0x900: ['cpu_pct', 'mem_pct', 'cput_cel', 'f4', 'f5', 'f6', 'f7', 'f8'],
     }
@@ -36,7 +47,9 @@ class DataSource():
         self.data_bus = resources['data_bus']
         self.frame_idx = 0
         self.synced = False
+        self.synced_for = 0
         self.in_dev = busio.UART(board.TX, board.RX, baudrate=115200)
+        # self.in_dev = busio.UART(board.TX, board.RX, baudrate=57600)
 
     @property
     def poll_freq(self):
@@ -44,20 +57,22 @@ class DataSource():
 
 
     # Read a 16 byte frame
-    def receiveCANFrame(in_dev):
-        return in_dev.read(16)
+    def receiveCANFrame(self):
+        return self.in_dev.read(16)
 
     # Get aligned with remote and return the first usable frame
     def alignToRemote(self):
         # We're looking for the first character in the frame header (frameMagic)
         synced_to = 0
         # We'll take 10 attempts before giving up
-        attempts_left = 10
+        attempts_left = 5
         # Wait here until we see a complete frame header
         while synced_to < len(self.frameMagic):
             if attempts_left == 0:
+                print_dbg1("We bailed")
                 return None
             attempts_left -= 1
+            # print("{} attempts left".format(attempts_left))
             # Read 1 byte from input
             data = self.in_dev.read(1)
             # If there's no data, loop and poll again
@@ -74,6 +89,7 @@ class DataSource():
             if debug:
                 print(" " + hex(current_char), end='')
         # If we get here, we just saw the frame header, so read the next 12 data bytes and return those
+        print_dbg1("We succeeded with {} attempts left".format(attempts_left))
         return self.frameMagic + self.in_dev.read(12)
 
     def dostuff(self, frame):
@@ -82,7 +98,9 @@ class DataSource():
         # if frameId == 0x600:
         #     return framePayload['eng_rpm']
         if frameId:
+            # print(10)
             return frameId, framePayload
+        # print(20)
         return None, None
 
     def unpackFrame(self, frame, defs, fields):
@@ -103,29 +121,51 @@ class DataSource():
         if self.synced:
             frame = self.receiveCANFrame()
             if not frame:
+                # print(1)
                 return None, None
-
             if len(frame) == 16 and frame[:4] == self.frameMagic:
                 # ... then do something with it
-                return self.dostuff(frame)
+                # print(2)
+                frameId, payload = self.dostuff(frame)
+                # print(frameId)
+                # print(payload)
+                self.synced_for += 1
+                print_dbg2("Synced for {} frames".format(self.synced_for))
+                print_dbg1("Returned frame while synced")
+                return frameId, payload
             else:
+                print_dbg1("Out of sync")
+                self.synced_for = 0
                 self.synced = False
+                return None, None
         else:
             frame = self.alignToRemote()
             if frame:
                 self.synced = True
-                return self.dostuff(frame)
+                # print(3)
+                frameId, payload = self.dostuff(frame)
+                # print(frameId)
+                print_dbg1("Synced")
+                self.synced_for = 1
+                return frameId, payload
             else:
+                # print(4)
+                print_dbg1("Failed to sync")
                 return None, None
 
     async def poll(self):
-        _, res = self.receive()
+        res = None
+        try:
+            _, res = self.receive()
+        except:
+            print("We barfed")
+            pass
         if res:
             for key, value in res.items():
                 if key not in self.target:
                     self.target[key] = {}
                 if 'value' not in self.target[key] or self.target[key]['value'] != value:
-                    print_dbg("Set {} to {}".format(key, value))
+                    print_dbg3("Set {} to {}".format(key, value))
                     self.target[key]['value'] = value
                     msg_topic = "data.{}".format(key)
                     self.data_bus.pub(msg_topic, value, auto_send=False)

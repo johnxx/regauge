@@ -10,15 +10,19 @@ class GaugeFace:
         if hasattr(self, '_value'):
             return self._value
         elif self.stream_spec.field_spec in data:
-            return data[self.stream_spec.field_spec]['value']
-        else:
-            return self.stream_spec.min_val
+            cf = self.stream_spec.units['conversion_factor']
+            v = data[self.stream_spec.field_spec]['value'] * cf
+            # print("Converting {}:{} with {}".format(self.stream_spec.field_spec, v, cf))
+            if v > self.stream_spec.min_val and v < self.stream_spec.max_val:
+                return v
+        return self.stream_spec.min_val
 
     @value.setter
     def value(self, value):
         if value == None:
             del self._value
         elif value <= self.stream_spec.max_val and value >= self.stream_spec.min_val:
+            # print("Set to {}".format(value))
             self._value = value
 
     def _apply_defaults(self, options):

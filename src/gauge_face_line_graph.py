@@ -74,7 +74,7 @@ class Face(GaugeFace):
         self.last_y = 0
 
         self.max_value = 0
-        self.min_value = 0
+        self.min_value = self.stream_spec.max_val
 
         self._setup_display()
 

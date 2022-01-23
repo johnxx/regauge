@@ -28,8 +28,15 @@ class DataSource():
                 "min": 4400,
                 "max": 7500,
                 "pattern": "zigzag",
-                "increment": 150,
+                "increment": 100,
                 "every": 1
+            },
+            "o2_lambda": {
+                "min": 0.7/0.0078125,
+                "max": 1.3/0.0078125,
+                "pattern": "zigzag",
+                "increment": 1,
+                "every": 2
             }
         }),
         (0x999, {
