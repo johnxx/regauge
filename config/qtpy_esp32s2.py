@@ -98,7 +98,7 @@ gauges = {
         'sub_type': 'SimpleGauge',
         'update_freq': 3,
         'resources': {
-            'display_group': 'lcd_bottom'
+            'display_group': 'lcd_top'
         },
         'stream_spec': {
             'field_spec': 'mem_pct',
@@ -114,7 +114,7 @@ gauges = {
         'sub_type': 'SimpleGauge',
         'update_freq': 30,
         'resources': {
-            'display_group': 'lcd_top'
+            'display_group': 'lcd_bottom'
         },
         'stream_spec': {
             'field_spec': 'cpu_pct',
