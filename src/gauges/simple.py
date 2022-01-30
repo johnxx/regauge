@@ -8,9 +8,8 @@ class SimpleGauge(Gauge):
     def __init__(self, options, resources) -> None:
         self.stream_spec = StreamSpec(**options['stream_spec'])
         self.options = options
-
-        gauge_face_module = __import__('gauge_face_' + options['gauge_face']['type'])
-        gauge_face_class = getattr(gauge_face_module, 'Face')
+        gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
+        gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
         self.face = gauge_face_class(self.stream_spec, options['gauge_face'], resources)
         
     def subscribed_streams(self):

@@ -81,6 +81,7 @@ class DataSource():
             self.send_frame_ids = list(map(self._get_frame_id, self.mock_frames))
         else:
             self.send_frame_ids = send_frame_ids
+        print(dir(target))
         self.target = target
         self._poll_freq = poll_freq
         self.data_bus = resources['data_bus']

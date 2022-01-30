@@ -2,12 +2,13 @@ import asynccp
 import asynccp.time as Duration
 import board
 import displayio
+import json
 import neopixel_slice
 import time
+from data import data
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
-from my_globals import config, data, resources
 from passy import Passy
 
 instrumentation = False
@@ -20,7 +21,7 @@ def initialize_gauges(gauges, resources):
     gauge_tasks = []
     for gauge_name, gauge_options in gauges.items():
         gauge_options['name'] = gauge_name
-        gauge_module = __import__('gauge_' + gauge_options['type'], None, None, [gauge_options['sub_type']])
+        gauge_module = __import__('gauges.' + gauge_options['type'], None, None, [gauge_options['sub_type']])
         gauge_class = getattr(gauge_module, gauge_options['sub_type'])
         # gauge = gauge_class(gauge_options, resources, data)
         gauge_resources = {}
@@ -33,6 +34,7 @@ def initialize_gauges(gauges, resources):
         if 'data_bus' in resources:
             for field_spec in gauge.subscribed_streams():
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
+        print("{}: {}Hz".format(gauge_name, gauge.update_freq))
         gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
     return gauge_tasks
             
@@ -44,15 +46,17 @@ def setup_tasks(config, resources, data):
     for data_source, options in config['data_sources'].items():
         if options['enabled']:
             options.pop('enabled')
-            data_source_module = __import__('source_' + options['type'])
-            del options['type']
+            print("Loading: {}".format('sources.' + options['type']))
+            data_source_module = __import__('sources.' + options['type'])
             if 'config_source' in options and options['config_source']:
-                data_source_class = getattr(data_source_module, 'ConfigSource')
+                data_source_class = getattr(data_source_module, options['type']).ConfigSource
+                del options['type']
                 options.pop('config_source')
                 resources['config_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, config, **options)
             else:
-                data_source_class = getattr(data_source_module, 'DataSource')
+                data_source_class = getattr(data_source_module, options['type']).DataSource
+                del options['type']
                 resources['data_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, data, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
@@ -171,39 +175,43 @@ def allocate_resources(layout, resources):
             resources[config['hw_resource']]['main_context'].append(resources[name])
 
     # @TODO: Overlay HACK!
-    overlay_color = 0x0099FF
+    # overlay_color = 0x0099FF
 
-    overlay = displayio.Group()
-    resources[config['hw_resource']]['main_context'].append(overlay)
-    mid_line = line.Line(x0=0, y0=120, x1=240, y1=120, color=overlay_color)
-    overlay.append(mid_line)
+    # overlay = displayio.Group()
+    # resources[config['hw_resource']]['main_context'].append(overlay)
+    # mid_line = line.Line(x0=0, y0=120, x1=240, y1=120, color=overlay_color)
+    # overlay.append(mid_line)
 
-    font_name = 'Cloude_Regular_Bold_1.02-32.bdf'
-    font = bitmap_font.load_font("/share/fonts/" + font_name)
+    # font_name = 'Cloude_Regular_Bold_1.02-32.bdf'
+    # font = bitmap_font.load_font("/share/fonts/" + font_name)
 
-    text_top = Label(font, text='Coolant', color=overlay_color, scale=1, anchor_point=(0, 1), anchored_position=(10, 120))
-    overlay.append(text_top)
+    # text_top = Label(font, text='Coolant', color=overlay_color, scale=1, anchor_point=(0, 1), anchored_position=(10, 120))
+    # overlay.append(text_top)
 
-    text_bottom = Label(font, text='Oil Pressure', color=overlay_color, scale=1, anchor_point=(1, 0), anchored_position=(230, 120))
-    overlay.append(text_bottom)
+    # text_bottom = Label(font, text='Oil Pressure', color=overlay_color, scale=1, anchor_point=(1, 0), anchored_position=(230, 120))
+    # overlay.append(text_bottom)
 
-    bottom_line = line.Line(x0=0, y0=225, x1=240, y1=225, color=overlay_color)
-    overlay.append(bottom_line)
+    # bottom_line = line.Line(x0=0, y0=225, x1=240, y1=225, color=overlay_color)
+    # overlay.append(bottom_line)
 
-    leds_text_bottom = Label(font, text='RPM', color=overlay_color, scale=1, anchor_point=(0.5, 1), anchored_position=(120, 235))
-    overlay.append(leds_text_bottom)
+    # leds_text_bottom = Label(font, text='RPM', color=overlay_color, scale=1, anchor_point=(0.5, 1), anchored_position=(120, 235))
+    # overlay.append(leds_text_bottom)
 
-    top_line = line.Line(x0=0, y0=15, x1=240, y1=15, color=overlay_color)
-    overlay.append(top_line)
+    # top_line = line.Line(x0=0, y0=15, x1=240, y1=15, color=overlay_color)
+    # overlay.append(top_line)
 
-    leds_text_top = Label(font, text='AFR', color=overlay_color, scale=1, anchor_point=(0.5, 0), anchored_position=(120, 5))
-    overlay.append(leds_text_top)
+    # leds_text_top = Label(font, text='AFR', color=overlay_color, scale=1, anchor_point=(0.5, 0), anchored_position=(120, 5))
+    # overlay.append(leds_text_top)
 
     return resources
             
     
 
 if __name__ == '__main__':
+    data['a'] = 'b';
+    fp = open('config.json', 'r')
+    j = json.load(fp)
+    config = j['config']
     resources = setup_hardware(config['hardware'])
     resources = allocate_resources(config['layout'], resources)
     tasks = setup_tasks(config, resources, data)
