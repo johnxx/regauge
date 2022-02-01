@@ -1,0 +1,153 @@
+{
+   "config" : {
+      "data_sources" : {
+         "config_listener" : {
+            "bind_addr" : "0.0.0.0",
+            "config_source" : true,
+            "enabled" : true,
+            "listen_port" : 80,
+            "type" : "http_json"
+         },
+         "data_listener" : {
+            "bind_addr" : "0.0.0.0",
+            "enabled" : false,
+            "listen_port" : 4557,
+            "poll_freq" : 10,
+            "type" : "tcp_msgpack"
+         },
+         "data_mock" : {
+            "enabled" : true,
+            "poll_freq" : 30,
+            "send_frame_ids" : [
+               2457
+            ],
+            "type" : "mock"
+         }
+      },
+      "gauges" : {
+         "cpu_lcd" : {
+            "gauge_face" : {
+               "type" : "line_graph"
+            },
+            "resources" : {
+               "display_group" : "lcd_bottom"
+            },
+            "stream_spec" : {
+               "field_spec" : "cpu_pct",
+               "max_val" : 199,
+               "min_val" : 0
+            },
+            "sub_type" : "SimpleGauge",
+            "type" : "simple",
+            "update_freq" : 30
+         },
+         "cpu_temp_leds" : {
+            "gauge_face" : {
+               "critical_level" : 999,
+               "normal_color" : 16711680,
+               "type" : "multi_led",
+               "warning_level" : 999
+            },
+            "resources" : {
+               "leds" : "left_leds_cw"
+            },
+            "stream_spec" : {
+               "field_spec" : "cputemp_cel",
+               "max_val" : 100,
+               "min_val" : 0
+            },
+            "sub_type" : "SimpleGauge",
+            "type" : "simple",
+            "update_freq" : 5
+         },
+         "fan_speed_leds" : {
+            "gauge_face" : {
+               "critical_level" : 9999,
+               "normal_color" : 255,
+               "type" : "multi_led",
+               "warning_level" : 9999
+            },
+            "resources" : {
+               "leds" : "right_leds_ccw"
+            },
+            "stream_spec" : {
+               "field_spec" : "fan_rpm",
+               "max_val" : 6000,
+               "min_val" : 0
+            },
+            "sub_type" : "SimpleGauge",
+            "type" : "simple",
+            "update_freq" : 5
+         },
+         "mem_graph" : {
+            "gauge_face" : {
+               "type" : "text"
+            },
+            "resources" : {
+               "display_group" : "lcd_top"
+            },
+            "stream_spec" : {
+               "field_spec" : "mem_pct",
+               "max_val" : 100,
+               "min_val" : 0
+            },
+            "sub_type" : "SimpleGauge",
+            "type" : "simple",
+            "update_freq" : 3
+         }
+      },
+      "hardware" : {
+         "lcd" : {
+            "enabled" : true,
+            "height" : 240,
+            "pins" : {
+               "bl" : "A3",
+               "cs" : "A0",
+               "dc" : "A1",
+               "rst" : "A2"
+            },
+            "width" : 240
+         },
+         "leds" : {
+            "brightness" : 0.01,
+            "enabled" : true,
+            "number" : 16,
+            "pins" : {
+               "data" : "SDA"
+            }
+         },
+         "wifi" : {
+            "enabled" : true,
+            "passphrase" : "<redacted>",
+            "ssid" : "SomethingClever"
+         }
+      },
+      "layout" : {
+         "lcd_bottom" : {
+            "hw_resource" : "lcd",
+            "type" : "display_group",
+            "x_offset" : 0,
+            "y_offset" : 120
+         },
+         "lcd_top" : {
+            "hw_resource" : "lcd",
+            "type" : "display_group",
+            "x_offset" : 0,
+            "y_offset" : 0
+         },
+         "left_leds_cw" : {
+            "end" : 16,
+            "hw_resource" : "leds",
+            "reverse" : true,
+            "start" : 8,
+            "type" : "neopixel_slice"
+         },
+         "right_leds_ccw" : {
+            "end" : 8,
+            "hw_resource" : "leds",
+            "start" : 0,
+            "type" : "neopixel_slice"
+         }
+      }
+   }
+}
