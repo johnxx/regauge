@@ -29,7 +29,9 @@
             "gauge_face" : {
                "type" : "line_graph"
             },
-            "time_series": {},
+            "time_series": {
+               "upto_vals": 8
+            },
             "resources" : {
                "display_group" : "lcd_bottom"
             },
@@ -86,9 +88,7 @@
             "gauge_face" : {
                "type" : "text"
             },
-            "time_series": {
-                "upto_vals": 60
-            },
+            "time_series": {},
             "resources" : {
                "display_group" : "lcd_top"
             },
@@ -118,6 +118,7 @@
             "brightness" : 0.01,
             "enabled" : true,
             "number" : 16,
+            "order": "GRBW",
             "pins" : {
                "data" : "D20"
             }

@@ -23,7 +23,6 @@ class TimeSeries():
 
     @property
     def value(self):
-        print("Will return: {}".format(self.data[-1][1]))
         return self.data[-1][1]
     
     @property
@@ -32,13 +31,20 @@ class TimeSeries():
 
     @latest.setter
     def latest(self, tstamp_val):
+        if self.upto_vals == 1:
+            self.data[0] = tstamp_val
+            self.min_val = self.max_val = tstamp_val[1]
+            #print("early return")
+            return
+
+        #print("long way round")
         if tstamp_val[1] > self.stream_spec.max_val:
             tstamp_val = (tstamp_val[0], self.stream_spec.max_val)
         elif tstamp_val[1] < self.stream_spec.min_val:
             tstamp_val = (tstamp_val[0], self.stream_spec.min_val)
         self.data.append(tstamp_val)
         self.trim()
-        self.update_aggregates(tstamp_val[1])
+        self.update_aggregates()
                 
     def trim(self):
         cur_time = time.monotonic()
@@ -51,11 +57,17 @@ class TimeSeries():
                 else:
                     break
 
-    def update_aggregates(self, value):
-        if value < self.min_value:
-            self.min_value = value
-        elif value > self.max_value:
-            self.max_value = value
+    def update_aggregates(self):
+        self.min_val = self.stream_spec.max_val
+        self.max_val = self.stream_spec.min_val
+        for ts, val in self.data:
+            #print("{}/{}: {} >= {} => {}".format(len(self.data), self.upto_vals, self.max_val, self.value, self.min_val))
+            if val < self.min_val:
+                #print(val)
+                self.min_val = val
+            elif val > self.max_val:
+                #print(val)
+                self.max_val = val
 
                 
     def since(self, tstamp):

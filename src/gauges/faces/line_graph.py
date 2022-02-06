@@ -6,7 +6,7 @@ import displayio
 import math
 import time
 
-debug = False
+debug = True
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -98,8 +98,9 @@ class Face(GaugeFace):
             
         added = 0
         for i, v in enumerate(self.ts.data[-self.num_seg_x:]):
+            self.ts.upto_vals = self.num_seg_x
             x = self.pick_x(i)
-            y = self.pick_y(v)
+            y = self.pick_y(v[1])
             # print_dbg("{} -> {}".format(v, y))
             print_dbg("Drawing {}, {} to {}x{}".format(i, v, x, y))
             graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
@@ -109,11 +110,6 @@ class Face(GaugeFace):
 
             self.last_x = x
             self.last_y = y
-
-            if v < self.ts.min_value:
-                self.ts.min_value = v
-            elif v > self.ts.max_value:
-                self.ts.max_value = v
 
             added += 1
         if len(self.lines) > self.num_seg_x:
@@ -135,15 +131,15 @@ class Face(GaugeFace):
                     print_dbg("Removed dot at {}x{}".format(s.x, s.y))
                     self.dots.remove(s)
 
-        min_y = self.pick_y(self.ts.min_value)
+        min_y = self.pick_y(self.ts.min_val)
         self.bottom_line.y = min_y
-        self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_value, self.ts.stream_spec.units['suffix'])
+        self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_val, self.ts.stream_spec.units['suffix'])
         new_min = (self.text_bottom.anchored_position[0], min_y)
         self.text_bottom.anchored_position = new_min
 
-        max_y = self.pick_y(self.ts.max_value)
+        max_y = self.pick_y(self.ts.max_val)
         self.top_line.y = max_y
-        self.text_top.text = self.options['fmt_string'].format(self.ts.max_value, self.ts.stream_spec.units['suffix'])
+        self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
         
