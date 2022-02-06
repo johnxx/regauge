@@ -1,5 +1,6 @@
 from gauge import Gauge
 from stream_spec import StreamSpec
+from timeseries import TimeSeries
 import time
 
 instrumentation = False
@@ -7,20 +8,18 @@ instrumentation = False
 class SimpleGauge(Gauge):
     def __init__(self, options, resources) -> None:
         self.stream_spec = StreamSpec(**options['stream_spec'])
+        self.ts = TimeSeries(stream_spec=self.stream_spec, **options['time_series'])
         self.options = options
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
         gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
-        self.face = gauge_face_class(self.stream_spec, options['gauge_face'], resources)
+        self.face = gauge_face_class(self.ts, options['gauge_face'], resources)
         
+    @property
     def subscribed_streams(self):
-        print("Will subscribe to {}".format(self.face.subscribed_streams))
-        return self.face.subscribed_streams
+        return self.ts.subscribed_streams
     
     def stream_updated(self, updates):
-        for topic, value in updates:
-            (prefix, field_spec) = topic.split(".")
-            if prefix == 'data' and self.stream_spec.field_spec == field_spec:
-                self.face.value = int(value * self.stream_spec.units['conversion_factor'])
+        return self.ts.stream_updated(updates)
 
     async def update(self):
         if instrumentation:

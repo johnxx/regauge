@@ -39,8 +39,8 @@ class Face(GaugeFace):
         self.display_group.append(self.bottom_line)
 
 
-    def __init__(self, stream_spec, options, resources) -> None:
-        self.stream_spec = stream_spec
+    def __init__(self, ts, options, resources) -> None:
+        self.ts = ts
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.display_group = resources['display_group']
@@ -67,14 +67,8 @@ class Face(GaugeFace):
         self.margin_top = 10
         self.margin_bottom = 30
 
-        self._values = []
-        self.history = []
-        
         self.last_x = 0
         self.last_y = 0
-
-        self.max_value = 0
-        self.min_value = self.stream_spec.max_val
 
         self._setup_display()
 
@@ -86,28 +80,11 @@ class Face(GaugeFace):
     def num_seg_y(self):
         return math.floor(self.height / self.seg_y)
 
-    @property
-    def subscribed_streams(self):
-        return [self.stream_spec.field_spec]
-        
-    @property
-    def value(self):
-        return self._values[-1]
-
-    @value.setter
-    def value(self, value):
-        self._values.append(value)
-        if value < self.min_value:
-            self.min_value = value
-        elif value > self.max_value:
-            self.max_value = value
-                
-        
     def pick_x(self, v):
         return math.floor(self.last_x+self.seg_x)
         
     def pick_y(self, v):
-        as_pct = (v - self.stream_spec.min_val) / self.stream_spec.max_val
+        as_pct = (v - self.ts.stream_spec.min_val) / self.ts.stream_spec.max_val
         # print("Showing value {} as pct {}".format(v, as_pct))
         return (self.height - math.floor(as_pct*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
@@ -120,7 +97,7 @@ class Face(GaugeFace):
         # self._trim_sprites(self.dots)
             
         added = 0
-        for i, v in enumerate(self._values[-self.num_seg_x:]):
+        for i, v in enumerate(self.ts.data[-self.num_seg_x:]):
             x = self.pick_x(i)
             y = self.pick_y(v)
             # print_dbg("{} -> {}".format(v, y))
@@ -133,10 +110,10 @@ class Face(GaugeFace):
             self.last_x = x
             self.last_y = y
 
-            if v < self.min_value:
-                self.min_value = v
-            elif v > self.max_value:
-                self.max_value = v
+            if v < self.ts.min_value:
+                self.ts.min_value = v
+            elif v > self.ts.max_value:
+                self.ts.max_value = v
 
             added += 1
         if len(self.lines) > self.num_seg_x:
@@ -158,28 +135,17 @@ class Face(GaugeFace):
                     print_dbg("Removed dot at {}x{}".format(s.x, s.y))
                     self.dots.remove(s)
 
-        min_y = self.pick_y(self.min_value)
+        min_y = self.pick_y(self.ts.min_value)
         self.bottom_line.y = min_y
-        self.text_bottom.text = self.options['fmt_string'].format(self.min_value, self.stream_spec.units['suffix'])
+        self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_value, self.ts.stream_spec.units['suffix'])
         new_min = (self.text_bottom.anchored_position[0], min_y)
         self.text_bottom.anchored_position = new_min
 
-        max_y = self.pick_y(self.max_value)
+        max_y = self.pick_y(self.ts.max_value)
         self.top_line.y = max_y
-        self.text_top.text = self.options['fmt_string'].format(self.max_value, self.stream_spec.units['suffix'])
+        self.text_top.text = self.options['fmt_string'].format(self.ts.max_value, self.ts.stream_spec.units['suffix'])
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
         
-        self.history.extend(self._values)
-        for v in self.history[:-self.num_seg_x]:
-            # print("history: {}".format(v))
-            self.history.remove(v)
-            if v == self.max_value:
-                # print("old max removed: {}".format(v))
-                self.max_value = max(self.history)
-            if v == self.min_value:
-                # print("old min removed: {}".format(v))
-                self.min_value = min(self.history)
-        self._values = []
         print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
         print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))

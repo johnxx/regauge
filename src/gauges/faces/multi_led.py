@@ -17,13 +17,11 @@ class Face(GaugeFace):
         'off_color': 0x000000
     }
 
-    def __init__(self, stream_spec, options, resources) -> None:
-        if not stream_spec or not resources['leds']:
-            raise ValueError("stream_spec is required")
+    def __init__(self, ts, options, resources) -> None:
         if not resources['leds'] or resources['leds'].n() < 2:
             raise ValueError("We need 2 or more NeoPixels")
 
-        self.stream_spec = stream_spec
+        self.ts = ts
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.pixels = resources['leds']
@@ -33,13 +31,13 @@ class Face(GaugeFace):
         self.prev_idx = 0
 
     def _range_per_segment(self):
-        return (self.stream_spec.max_val - self.stream_spec.min_val) / self.pixels.n()
+        return (self.ts.stream_spec.max_val - self.ts.stream_spec.min_val) / self.pixels.n()
 
     def _value_to_segment(self):
-        return math.floor((self.value - self.stream_spec.min_val) / (self.stream_spec.max_val - self.stream_spec.min_val) * (self.pixels.n() - 1))
+        return math.floor((self.ts.value - self.ts.stream_spec.min_val) / (self.ts.stream_spec.max_val - self.ts.stream_spec.min_val) * (self.pixels.n() - 1))
     
     def _pick_color(self, idx):
-        v = self._range_per_segment() * (idx + 1) + self.stream_spec.min_val
+        v = self._range_per_segment() * (idx + 1) + self.ts.stream_spec.min_val
         if v > self.options['critical_level']:
             print_dbg("Picked critical for {} ({})".format(v, idx))
             return self.options['critical_color']
@@ -51,9 +49,9 @@ class Face(GaugeFace):
             return self.options['normal_color']
 
     def _pick_color_old(self):
-        if self.value > self.options['critical_level']:
+        if self.ts.value > self.options['critical_level']:
             return self.options['critical_color']
-        elif self.value > self.options['warning_level']:
+        elif self.ts.value > self.options['warning_level']:
             return self.options['warning_color']
         else:
             return self.options['normal_color']
@@ -67,7 +65,7 @@ class Face(GaugeFace):
 
     def update(self):
         self.cur_idx = self._value_to_segment()
-        print_dbg("Turning on  {}/{} LEDs for value {}/{}".format(self.cur_idx+1, self.pixels.n(), self.value, self.stream_spec.max_val))
+        print_dbg("Turning on  {}/{} LEDs for value {}/{}".format(self.cur_idx+1, self.pixels.n(), self.ts.value, self.ts.stream_spec.max_val))
         for n in range(self.pixels.n()):
             if n < self.cur_idx:
                 self.pixels[n] = self._pick_color(n)

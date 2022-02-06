@@ -14,7 +14,7 @@ class Face(GaugeFace):
         
     }
 
-    def __init__(self, stream_spec, options, resources) -> None:
+    def __init__(self, ts, options, resources) -> None:
         # print(resources)
         # print(stream_spec)
         # if not stream_spec or not resources['display_group']:
@@ -22,7 +22,7 @@ class Face(GaugeFace):
 
         self.options = self._apply_defaults(options)
         self.resources = resources
-        self.stream_spec = stream_spec
+        self.ts = ts
         self._setup_display()
 
         self.update()
@@ -53,4 +53,4 @@ class Face(GaugeFace):
     
     def update(self):
         # print(self.value)
-        self.text_area.text = self.options['fmt_string'].format(self.value, self.stream_spec.units['suffix'])
+        self.text_area.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])

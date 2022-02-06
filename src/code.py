@@ -32,7 +32,7 @@ def initialize_gauges(gauges, resources):
         if 'config_bus' in resources:
             resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
         if 'data_bus' in resources:
-            for field_spec in gauge.subscribed_streams():
+            for field_spec in gauge.subscribed_streams:
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
         print("{}: {}Hz".format(gauge_name, gauge.update_freq))
         gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
@@ -208,7 +208,6 @@ def allocate_resources(layout, resources):
     
 
 if __name__ == '__main__':
-    data['a'] = 'b';
     fp = open('config.json', 'r')
     j = json.load(fp)
     config = j['config']
