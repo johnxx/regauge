@@ -5,7 +5,7 @@ import displayio
 import json
 import neopixel_slice
 import time
-from data import data
+#from data import data
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
@@ -38,7 +38,7 @@ def initialize_gauges(gauges, resources):
         gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
     return gauge_tasks
             
-def setup_tasks(config, resources, data):
+def setup_tasks(config, resources):
     tasks = {
         'data_sources': {},
         'gauges': [],
@@ -58,7 +58,7 @@ def setup_tasks(config, resources, data):
                 data_source_class = getattr(data_source_module, options['type']).DataSource
                 del options['type']
                 resources['data_bus'] = Passy(task_manager=asynccp)
-                data_source_obj = data_source_class(data_source, resources, data, **options)
+                data_source_obj = data_source_class(data_source, resources, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
     tasks['gauges'] = initialize_gauges(config['gauges'], resources)
     return tasks
@@ -213,5 +213,5 @@ if __name__ == '__main__':
     config = j['config']
     resources = setup_hardware(config['hardware'])
     resources = allocate_resources(config['layout'], resources)
-    tasks = setup_tasks(config, resources, data)
+    tasks = setup_tasks(config, resources)
     asynccp.run()

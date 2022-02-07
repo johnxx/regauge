@@ -6,7 +6,7 @@ import displayio
 import math
 import time
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -69,6 +69,9 @@ class Face(GaugeFace):
 
         self.last_x = 0
         self.last_y = 0
+        
+        self.latest_tstamp = 0
+        self.ts.upto_vals = self.num_seg_x
 
         self._setup_display()
 
@@ -96,13 +99,16 @@ class Face(GaugeFace):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
             
+        num_segs = self.num_seg_x
+        print_dbg("Current number of segments: {}".format(num_segs))
         added = 0
-        for i, v in enumerate(self.ts.data[-self.num_seg_x:]):
-            self.ts.upto_vals = self.num_seg_x
+        for i, v in enumerate(self.ts.since(self.latest_tstamp)):
+            if v[0] > self.latest_tstamp:
+                self.latest_tstamp = v[0]
             x = self.pick_x(i)
             y = self.pick_y(v[1])
             # print_dbg("{} -> {}".format(v, y))
-            print_dbg("Drawing {}, {} to {}x{}".format(i, v, x, y))
+            print_dbg("Drawing {}, {} to {}x{}".format(i, v[1], x, y))
             graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
             self.dots.append(graph_pixel)
             line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])

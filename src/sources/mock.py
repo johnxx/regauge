@@ -76,13 +76,13 @@ class DataSource():
         print_dbg("Adding: {}".format(mock_frame[0]))
         return mock_frame[0]
 
-    def __init__(self, name, resources, target, poll_freq=5, send_frame_ids='all') -> None:
+    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all') -> None:
         if send_frame_ids == 'all':
             self.send_frame_ids = list(map(self._get_frame_id, self.mock_frames))
         else:
             self.send_frame_ids = send_frame_ids
         # print(dir(target))
-        self.target = target
+        #self.target = target
         self._poll_freq = poll_freq
         self.data_bus = resources['data_bus']
         self.frame_idx = 0
@@ -153,13 +153,8 @@ class DataSource():
         res = self.process_mock_frame(self.mock_frames[self.frame_idx])
         payload = res[1]
         for key, value in payload.items():
-            if key not in self.target:
-                self.target[key] = {}
-            if 'value' not in self.target[key] or self.target[key]['value'] != value:
-                print_dbg("Set {} to {}".format(key, value))
-                self.target[key]['value'] = value
-                msg_topic = "data.{}".format(key)
-                self.data_bus.pub(msg_topic, value, auto_send=False)
+            msg_topic = "data.{}".format(key)
+            self.data_bus.pub(msg_topic, value, auto_send=False)
         self.data_bus.send_all()
 
         self._advance_frame()

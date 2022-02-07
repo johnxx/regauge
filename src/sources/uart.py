@@ -41,8 +41,7 @@ class DataSource():
 
     frameMagic = bytearray([0x44, 0x33, 0x22, 0x11])
 
-    def __init__(self, name, resources, target, poll_freq=5) -> None:
-        self.target = target
+    def __init__(self, name, resources, poll_freq=5) -> None:
         self._poll_freq = poll_freq
         self.data_bus = resources['data_bus']
         self.frame_idx = 0
@@ -162,11 +161,7 @@ class DataSource():
             pass
         if res:
             for key, value in res.items():
-                if key not in self.target:
-                    self.target[key] = {}
-                if 'value' not in self.target[key] or self.target[key]['value'] != value:
-                    print_dbg3("Set {} to {}".format(key, value))
-                    self.target[key]['value'] = value
-                    msg_topic = "data.{}".format(key)
-                    self.data_bus.pub(msg_topic, value, auto_send=False)
+                print_dbg3("Set {} to {}".format(key, value))
+                msg_topic = "data.{}".format(key)
+                self.data_bus.pub(msg_topic, value, auto_send=False)
             self.data_bus.send_all()

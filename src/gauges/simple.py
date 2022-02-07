@@ -4,6 +4,7 @@ from timeseries import TimeSeries
 import time
 
 instrumentation = False
+instrumentation_ts = False
 
 class SimpleGauge(Gauge):
     def __init__(self, options, resources) -> None:
@@ -19,7 +20,13 @@ class SimpleGauge(Gauge):
         return self.ts.subscribed_streams
     
     def stream_updated(self, updates):
-        return self.ts.stream_updated(updates)
+        if instrumentation_ts and instrumentation_ts == self.options['name']:
+            start_time = time.monotonic()
+        self.ts.stream_updated(updates)
+        if instrumentation_ts and instrumentation_ts == self.options['name']:
+            end_time = time.monotonic()
+            total = end_time - start_time
+            print("{} took {}s".format(self.options['name'], total))
 
     async def update(self):
         if instrumentation:

@@ -66,7 +66,8 @@ class Face(GaugeFace):
     def update(self):
         self.cur_idx = self._value_to_segment()
         print_dbg("Turning on  {}/{} LEDs for value {}/{}".format(self.cur_idx+1, self.pixels.n(), self.ts.value, self.ts.stream_spec.max_val))
-        for n in range(self.pixels.n()):
+        pix_range = range(self.pixels.n())
+        for n in pix_range:
             if n < self.cur_idx:
                 self.pixels[n] = self._pick_color(n)
             elif n == self.cur_idx:

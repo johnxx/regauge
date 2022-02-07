@@ -65,9 +65,11 @@ class TimeSeries():
             if val < self.min_val:
                 #print(val)
                 self.min_val = val
-            elif val > self.max_val:
+            if val > self.max_val:
                 #print(val)
                 self.max_val = val
+        #print([x[1] for x in self.data])
+        #print("min: {}, max: {}".format(self.min_val, self.max_val))
 
                 
     def since(self, tstamp):
