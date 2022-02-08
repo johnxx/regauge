@@ -107,20 +107,20 @@
             "enabled" : true,
             "height" : 240,
             "pins" : {
-               "bl" : "D6",
-               "cs" : "D9",
-               "dc" : "D18",
-               "rst" : "D19"
+               "bl" : "A3",
+               "cs" : "A0",
+               "dc" : "A1",
+               "rst" : "A2"
             },
             "width" : 240
          },
          "leds" : {
-            "brightness" : 0.01,
+            "brightness" : 0.1,
             "enabled" : true,
             "number" : 16,
             "order": "GRBW",
             "pins" : {
-               "data" : "D20"
+               "data" : "SDA"
             }
          },
          "wifi" : {
