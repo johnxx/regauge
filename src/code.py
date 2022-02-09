@@ -66,6 +66,21 @@ def setup_tasks(config, resources):
 def setup_hardware(hardware):
     resources = {}
 
+    if hardware['can']['enabled']:
+        can_cfg = hardware['can']
+        import canio
+        import digitalio
+        if hasattr(board, 'CAN_STANDBY'):
+            standby = digitalio.DigitalInOut(board.CAN_STANDBY)
+            standby.switch_to_output(False)
+         
+        # If the CAN transceiver is powered by a boost converter, turn on its supply
+        if hasattr(board, 'BOOST_ENABLE'):
+            boost_enable = digitalio.DigitalInOut(board.BOOST_ENABLE)
+            boost_enable.switch_to_output(True)
+         
+        resources['can'] = canio.CAN(rx=can_cfg['rx'], tx=can_cfg['tx'], baudrate=can_cfg['bit_rate'], auto_restart=True)
+
     if hardware['wifi']['enabled']:
         wifi_cfg = hardware['wifi']
         import wifi
