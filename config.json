@@ -15,8 +15,13 @@
             "poll_freq" : 10,
             "type" : "tcp_msgpack"
          },
-         "data_mock" : {
+         "data_can" : {
             "enabled" : true,
+            "poll_freq" : 30,
+            "type" : "canbus"
+         },
+         "data_mock" : {
+            "enabled" : false,
             "poll_freq" : 30,
             "send_frame_ids" : [
                2457
@@ -103,6 +108,14 @@
          }
       },
       "hardware" : {
+         "can": {
+            "enabled": true,
+            "bit_rate": 500000,
+            "pins": {
+               "rx": "RX",
+               "tx": "TX"
+            }
+         },
          "lcd" : {
             "enabled" : true,
             "height" : 240,

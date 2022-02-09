@@ -79,7 +79,9 @@ def setup_hardware(hardware):
             boost_enable = digitalio.DigitalInOut(board.BOOST_ENABLE)
             boost_enable.switch_to_output(True)
          
-        resources['can'] = canio.CAN(rx=can_cfg['rx'], tx=can_cfg['tx'], baudrate=can_cfg['bit_rate'], auto_restart=True)
+        rx_pin = getattr(board, can_cfg['pins']['rx'])
+        tx_pin = getattr(board, can_cfg['pins']['tx'])
+        resources['can'] = canio.CAN(rx=rx_pin, tx=tx_pin, baudrate=can_cfg['bit_rate'], auto_restart=True)
 
     if hardware['wifi']['enabled']:
         wifi_cfg = hardware['wifi']

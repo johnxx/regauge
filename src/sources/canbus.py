@@ -2,10 +2,16 @@ import board
 import digitalio
 import busio
 import canio
+import struct
 import time
 from collections import namedtuple
 
-Frame = namedtuple("Frame", "struct", "fields")
+Frame = namedtuple("Frame", ("struct", "fields"))
+
+debug = True
+def print_dbg(some_string, **kwargs):
+    if debug:
+        return print(some_string, **kwargs)
 
 class DataSource():
 
@@ -21,16 +27,39 @@ class DataSource():
 
     match = canio.Match(0x600, 0x100)
 
-    def __init__(self, can) -> None:
-        self.listener = can.listen(matches=[self.match], timeout=1)
-        pass
+    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all') -> None:
+        self.bus = resources['can']
+        self.poll_freq = poll_freq
+        self.listener = self.bus.listen(matches=[self.match], timeout=1)
+
+    def unpack_frame(self, frame):
+        # Fish the frame ID out of the 4 bytes after the header
+        id = int.from_bytes(frame[4:8], 'little')
+        # We saw a frame we can't decode
+        if id not in self.frame_defs:
+            print_dbg(id, end='')
+            return None, None
+        # Unpack values from the struct
+        values = struct.unpack(self.frame_defs[id].struct, frame[8:])
+        # Make a dict from field names and frame values
+        return id, dict(zip(self.frame_defs[id].fields, values))
     
-    def poll(self):
+    async def poll(self):
         message = self.listener.receive()
         if message is None:
-            print("No messsage received within timeout")
+            print_dbg("No messsage received within timeout")
             return
      
         if len(message.data) != 8:
-            print(f"Unusual message length {len(message.data)}")
+            print_dbg(f"Unusual message length {len(message.data)}")
             return
+        
+        id, frame_data = self.unpack_frame(message)
+        print_dbg("Got frame with id: {}".format(id))
+
+        if frame_data:
+            for key, value in frame_data.items():
+                print_dbg("Set {} to {}".format(key, value))
+                msg_topic = "data.{}".format(key)
+                self.data_bus.pub(msg_topic, value, auto_send=False)
+            self.data_bus.send_all()
