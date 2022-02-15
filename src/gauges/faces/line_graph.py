@@ -6,6 +6,7 @@ import displayio
 import math
 import time
 
+instrumentation = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
@@ -72,6 +73,10 @@ class Face(GaugeFace):
         
         self.latest_tstamp = 0
         self.ts.upto_vals = self.num_seg_x
+
+        if instrumentation:
+            self.current_second = math.floor(time.monotonic())
+            self.frames_this_second = 0
 
         self._setup_display()
 
@@ -148,6 +153,15 @@ class Face(GaugeFace):
         self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
+        
+        if instrumentation:
+            this_second = math.floor(time.monotonic())
+            if self.current_second != this_second:
+                print("framerate: {}".format(self.frames_this_second))
+                self.frames_this_second = 1
+                self.current_second = this_second
+            else:
+                self.frames_this_second += 1
         
         print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
         print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))
