@@ -18,7 +18,7 @@ def serve_file(path_el):
         headers['Content-Type'] = "text/javascript"
 
     try:
-        with open(path, "r") as f:
+        with open(path, "rb") as f:
             return (200, headers, f.read())
     except OSError as e:
         return (404, {}, "{} not found".format(path))
@@ -27,13 +27,9 @@ def serve_file(path_el):
 def index(request):
     return serve_file(["web", "index.html"])
 
-@ampule.route("/assets/icons/<filename>")
-def files(request, filename):
-    return serve_file(["web", "assets", "icons", filename])
-
-@ampule.route("/assets/css/<filename>")
-def files(request, filename):
-    return serve_file(["web", "assets", "css", filename])
+@ampule.route("/assets/<subdir>/<filename>")
+def files(request, subdir, filename):
+    return serve_file(["web", "assets", subdir, filename])
 
 @ampule.route("/assets/<filename>")
 def files(request, filename):
@@ -42,6 +38,10 @@ def files(request, filename):
 @ampule.route("/<filename>")
 def files(request, filename):
     return serve_file(["web", filename])
+
+@ampule.route("/api/config")
+def get_config(request):
+    return (200, {}, json.dumps(request.context.target))
 
 @ampule.route("/api/config", method='POST')
 def post_config(request):
