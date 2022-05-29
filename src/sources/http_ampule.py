@@ -1,6 +1,7 @@
 import ampule
 import json
 import os
+import re
 from io import BytesIO
 
 debug = True
@@ -10,9 +11,15 @@ def print_dbg(some_string, **kwargs):
 
 def serve_file(path_el):
     path = os.sep.join(path_el)
+    headers = {}
+    if path.endswith(".png"):
+        headers['Content-Type'] = "image/png"
+    if path.endswith(".js"):
+        headers['Content-Type'] = "text/javascript"
+
     try:
         with open(path, "r") as f:
-            return (200, {}, f.read())
+            return (200, headers, f.read())
     except OSError as e:
         return (404, {}, "{} not found".format(path))
 
@@ -20,9 +27,27 @@ def serve_file(path_el):
 def index(request):
     return serve_file(["web", "index.html"])
 
-@ampule.route("/files/<filename>")
+@ampule.route("/assets/icons/<filename>")
 def files(request, filename):
-    return serve_file(["files", filename])
+    return serve_file(["web", "assets", "icons", filename])
+
+@ampule.route("/assets/css/<filename>")
+def files(request, filename):
+    return serve_file(["web", "assets", "css", filename])
+
+@ampule.route("/assets/<filename>")
+def files(request, filename):
+    return serve_file(["web", "assets", filename])
+
+@ampule.route("/<filename>")
+def files(request, filename):
+    return serve_file(["web", filename])
+
+@ampule.route("/api/config", method='POST')
+def post_config(request):
+    print(json.dumps(request.body))
+    print("Got config!")
+    return (200, {}, "OK!")
 
 
 class ConfigSource():

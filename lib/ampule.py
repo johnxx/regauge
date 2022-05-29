@@ -1,5 +1,7 @@
 import io
 import re
+import sys
+import traceback
 
 BUFFER_SIZE = 256
 TIMEOUT = 30
@@ -149,6 +151,7 @@ def listen(socket, context=None, timeout=30):
             __send_response(client, 404, {}, "Not found")
     except BaseException as e:
         print("Error with request:", str(e))
+        #traceback.print_exception(None, e, sys.exc_info()[2])
         __send_response(client, 500, {}, "Error processing request")
     client.close()
 

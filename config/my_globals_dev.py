@@ -1,10 +1,8 @@
 hardware = {
     'wifi': {
         'enabled': True,
-        'ssid': 'Fern MP2.4',
-        'passphrase': '82Kdfnsz'
-        # 'ssid': 'Pequod',
-        # 'passphrase': 'Call me Ishy.'
+        'ssid': 'SomethingClever',
+        'passphrase': '<redacted>'
     },
     'lcd': {
         'enabled': True,
