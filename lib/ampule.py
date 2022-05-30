@@ -1,5 +1,7 @@
 import io
 import re
+import json
+import time
 import sys
 import traceback
 
@@ -9,9 +11,10 @@ routes = []
 variable_re = re.compile("^<([a-zA-Z]+)>$")
 
 class Request:
-    def __init__(self, method, full_path):
+    def __init__(self, method, full_path, version="HTTP/1.0"):
         self.method = method
         self.path = full_path.split("?")[0]
+        self.version = version
         self.params = Request.__parse_params(full_path)
         self.headers = {}
         self.body = None
@@ -45,7 +48,8 @@ def __parse_body(reader):
 
 def __read_request(client):
     message = bytearray()
-    client.settimeout(30)
+    #client.settimeout(30)
+    client.settimeout(5)
     socket_recv = True
 
     try:
@@ -64,9 +68,13 @@ def __read_request(client):
 
     reader = io.BytesIO(message)
     line = str(reader.readline(), "utf-8")
-    (method, full_path, version) = line.rstrip("\r\n").split(None, 2)
+    if line == '':
+        raise ValueError("Request was empty")
+    (method, full_path, version) = (line.rstrip("\r\n").split(None, 2) + [None, None, None])[:3]
 
-    request = Request(method, full_path)
+    if not version:
+        version = "HTTP/1.0"
+    request = Request(method, full_path, version)
     request.headers = __parse_headers(reader)
     request.body = __parse_body(reader)
 
@@ -137,6 +145,7 @@ def __match_route(path, method):
 
 def listen(socket, context=None, timeout=30):
     client, remote_address = socket.accept()
+    log_level = 6
     try:
         client.settimeout(timeout)
         request = __read_request(client)
@@ -149,11 +158,28 @@ def listen(socket, context=None, timeout=30):
             __send_response(client, status, headers, body)
         else:
             __send_response(client, 404, {}, "Not found")
+        if log_level >= 6:
+            print("ampule: {} - friend [{}] \"{} {} {}\" {} {}"
+                .format(
+                    remote_address[0],
+                    time.monotonic(),
+                    request.method,
+                    request.path,
+                    request.version,
+                    status,
+                    len(body)
+                )
+            )
     except BaseException as e:
-        print("Error with request:", str(e))
+        print("Error with request: {}: {}".format(type(e), e))
+        # print("Error with request", str(e))
+        # print("Error with request:", str(json.dumps(e)))
         #traceback.print_exception(None, e, sys.exc_info()[2])
         __send_response(client, 500, {}, "Error processing request")
-    client.close()
+    finally:
+        if log_level >= 7:
+            print("Closing connection")
+        client.close()
 
 def route(rule, method='GET'):
     return lambda func: __on_request(method, rule, func)

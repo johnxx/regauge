@@ -45,9 +45,9 @@ def get_config(request):
 
 @ampule.route("/api/config", method='POST')
 def post_config(request):
-    print(json.dumps(request.body))
-    print("Got config!")
-    return (200, {}, "OK!")
+    # print(json.dumps(request.body))
+    # print("Got config!")
+    return (200, {}, json.dumps("OK!"))
 
 
 class ConfigSource():
