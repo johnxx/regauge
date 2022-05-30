@@ -11,6 +11,7 @@ class SimpleGauge(Gauge):
         self.stream_spec = StreamSpec(**options['stream_spec'])
         self.ts = TimeSeries(stream_spec=self.stream_spec, **options['time_series'])
         self.options = options
+        # @TODO: Looks like we're not setting 'type' 
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
         gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
         self.face = gauge_face_class(self.ts, options['gauge_face'], resources)

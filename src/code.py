@@ -11,30 +11,64 @@ from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
 from passy import Passy
 
+DISPLAY_GROUP = 0
+NEOPIXEL_SLICE = 1
+
+LINE_GRAPH = 0
+TEXT = 1
+MULTI_LED = 2
+
 instrumentation = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
 
-def initialize_gauges(gauges, resources):
+def initialize_gauges(layout, resources):
     gauge_tasks = []
-    for gauge_name, gauge_options in gauges.items():
-        gauge_options['name'] = gauge_name
-        gauge_module = __import__('gauges.' + gauge_options['type'], None, None, [gauge_options['sub_type']])
-        gauge_class = getattr(gauge_module, gauge_options['sub_type'])
-        # gauge = gauge_class(gauge_options, resources, data)
+    for block in layout:
+        # @TODO: Deprecated settings. May return in another form at some point in the future
+        block['type'] = 'simple'
+        block['sub_type'] = 'SimpleGauge'
+
+        resource_config = block['resource']
         gauge_resources = {}
-        for type, name in gauge_options['resources'].items():
-            print_dbg("Assigned {} to Gauge {} as {}".format(name, gauge_options['sub_type'], type))
-            gauge_resources[type] = resources[name]
-        gauge = gauge_class(gauge_options, gauge_resources)
+        if resource_config['ofType'] == NEOPIXEL_SLICE:
+            if 'step' in resource_config and resource_config['step']:
+                keys = range(
+                    resource_config['start'],
+                    resource_config['end'],
+                    resource_config['step']
+                )
+            else:
+                keys = range(
+                    resource_config['start'],
+                    resource_config['end']
+                )
+            if 'reverse' in resource_config and resource_config['reverse']:
+                keys = list(reversed(keys))
+                
+            gauge_resource = neopixel_slice.NeoPixelSlice(
+                resources[resource_config['hw_resource']], 
+                keys
+            )
+            gauge_resources['leds]'] = gauge_resource
+        elif resource_config['ofType'] == DISPLAY_GROUP:
+            gauge_resource = displayio.Group(x=resource_config['x_offset'], y=resource_config['y_offset'])
+            resources[resource_config['hw_resource']]['main_context'].append(gauge_resource)
+            gauge_resources['display_group]'] = gauge_resource
+
+
+        gauge_module = __import__('gauges.' + block['type'], None, None, [block['sub_type']])
+        gauge_class = getattr(gauge_module, block['sub_type'])
+        # gauge = gauge_class(gauge_options, resources, data)
+        gauge = gauge_class(block, gauge_resources)
         if 'config_bus' in resources:
-            resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
+            resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(block['name']))
         if 'data_bus' in resources:
             for field_spec in gauge.subscribed_streams:
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
-        print("{}: {}Hz".format(gauge_name, gauge.update_freq))
+        print("{}: {}Hz".format(block['name'], gauge.update_freq))
         gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
     return gauge_tasks
             
@@ -44,6 +78,18 @@ def setup_tasks(config, resources):
         'gauges': [],
     }
     for data_source, options in config['data_sources'].items():
+        if 'type' not in options:
+            if data_source == 'config_listener':
+                options['type'] = 'http_ampule'
+                options['config_source'] = True
+            elif data_source == 'data_listener':
+                options['type'] = 'tcp_msgpack'
+            elif data_source == 'data_can':
+                options['type'] = 'canbus'
+            else:
+                print("Failed to infer type for {}".format(data_source))
+        if 'enabled' not in options:
+            options['enabled'] = True
         if options['enabled']:
             options.pop('enabled')
             print("Loading: {}".format('sources.' + options['type']))
@@ -60,7 +106,7 @@ def setup_tasks(config, resources):
                 resources['data_bus'] = Passy(task_manager=asynccp)
                 data_source_obj = data_source_class(data_source, resources, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
-    tasks['gauges'] = initialize_gauges(config['gauges'], resources)
+    tasks['gauges'] = initialize_gauges(config['layout'], resources)
     return tasks
         
 def setup_hardware(hardware):
@@ -226,9 +272,9 @@ def allocate_resources(layout, resources):
 
 if __name__ == '__main__':
     fp = open('config.json', 'r')
-    j = json.load(fp)
-    config = j['config']
+    config = json.load(fp)
+    # config = j['config']
     resources = setup_hardware(config['hardware'])
-    resources = allocate_resources(config['layout'], resources)
+    # resources = allocate_resources(config['layout'], resources)
     tasks = setup_tasks(config, resources)
     asynccp.run()
