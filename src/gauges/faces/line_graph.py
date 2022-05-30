@@ -3,6 +3,7 @@ from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
 from gauge_face import GaugeFace
 import displayio
+import json
 import math
 import time
 
@@ -44,6 +45,7 @@ class Face(GaugeFace):
         self.ts = ts
         self.options = self._apply_defaults(options)
         self.resources = resources
+        print(json.dumps(resources))
         self.display_group = resources['display_group']
         self.dots = displayio.Group()
         self.lines = displayio.Group()

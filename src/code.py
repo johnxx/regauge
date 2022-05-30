@@ -11,12 +11,12 @@ from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
 from passy import Passy
 
-DISPLAY_GROUP = 0
-NEOPIXEL_SLICE = 1
+DISPLAY_GROUP = "0"
+NEOPIXEL_SLICE = "1"
 
-LINE_GRAPH = 0
-TEXT = 1
-MULTI_LED = 2
+LINE_GRAPH = "0"
+TEXT = "1"
+MULTI_LED = "2"
 
 instrumentation = False
 debug = False
@@ -33,6 +33,7 @@ def initialize_gauges(layout, resources):
 
         resource_config = block['resource']
         gauge_resources = {}
+        print(json.dumps(resource_config))
         if resource_config['ofType'] == NEOPIXEL_SLICE:
             if 'step' in resource_config and resource_config['step']:
                 keys = range(
@@ -54,14 +55,18 @@ def initialize_gauges(layout, resources):
             )
             gauge_resources['leds]'] = gauge_resource
         elif resource_config['ofType'] == DISPLAY_GROUP:
-            gauge_resource = displayio.Group(x=resource_config['x_offset'], y=resource_config['y_offset'])
-            resources[resource_config['hw_resource']]['main_context'].append(gauge_resource)
-            gauge_resources['display_group]'] = gauge_resource
+            gauge_resource = displayio.Group(x=int(resource_config['x_offset']), y=int(resource_config['y_offset']))
+            resources['lcd']['main_context'].append(gauge_resource)
+            gauge_resources['display_group'] = gauge_resource
+        else:
+            print("Couldn't figure out resource type for gauge")
+            break
 
 
         gauge_module = __import__('gauges.' + block['type'], None, None, [block['sub_type']])
         gauge_class = getattr(gauge_module, block['sub_type'])
         # gauge = gauge_class(gauge_options, resources, data)
+        print(json.dumps(gauge_resources))
         gauge = gauge_class(block, gauge_resources)
         if 'config_bus' in resources:
             resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(block['name']))
@@ -69,7 +74,7 @@ def initialize_gauges(layout, resources):
             for field_spec in gauge.subscribed_streams:
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
         print("{}: {}Hz".format(block['name'], gauge.update_freq))
-        gauge_tasks.append(asynccp.schedule(frequency=gauge.update_freq, coroutine_function=gauge.update))
+        gauge_tasks.append(asynccp.schedule(frequency=int(gauge.update_freq), coroutine_function=gauge.update))
     return gauge_tasks
             
 def setup_tasks(config, resources):

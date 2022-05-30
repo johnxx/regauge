@@ -1,7 +1,12 @@
 from gauge import Gauge
 from stream_spec import StreamSpec
 from timeseries import TimeSeries
+import json
 import time
+
+LINE_GRAPH = "0"
+TEXT = "1"
+MULTI_LED = "2"
 
 instrumentation = False
 instrumentation_ts = False
@@ -12,6 +17,13 @@ class SimpleGauge(Gauge):
         self.ts = TimeSeries(stream_spec=self.stream_spec, **options['time_series'])
         self.options = options
         # @TODO: Looks like we're not setting 'type' 
+        if 'type' not in options['gauge_face']:
+            if options['gauge_face']['ofType'] == LINE_GRAPH:
+                options['gauge_face']['type'] = 'line_graph'
+            elif options['gauge_face']['ofType'] == TEXT:
+                options['gauge_face']['type'] = 'text'
+            elif options['gauge_face']['ofType'] == MULTI_LED:
+                options['gauge_face']['type'] = 'multi_led'
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
         gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
         self.face = gauge_face_class(self.ts, options['gauge_face'], resources)
