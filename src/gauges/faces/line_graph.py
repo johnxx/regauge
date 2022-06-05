@@ -9,6 +9,7 @@ import time
 
 instrumentation = False
 debug = False
+dump_cfg = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -42,10 +43,13 @@ class Face(GaugeFace):
 
 
     def __init__(self, ts, options, resources) -> None:
+        if dump_cfg:
+            print("time_series: {}".format(json.dumps(ts)))
+            print("options: {}".format(json.dumps(options)))
+            print("resources: {}".format(json.dumps(resources)))
         self.ts = ts
         self.options = self._apply_defaults(options)
         self.resources = resources
-        print(json.dumps(resources))
         self.display_group = resources['display_group']
         self.dots = displayio.Group()
         self.lines = displayio.Group()

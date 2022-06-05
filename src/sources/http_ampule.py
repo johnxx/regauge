@@ -4,10 +4,56 @@ import os
 import re
 from io import BytesIO
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
+
+def merge(a, b, path=None, notifier=None, debug_below=False):
+    "merges b into a"
+    if path is None: path = []
+    print_dbg("Merging: {}".format(json.dumps(path)))
+    if debug_below: 
+        print(json.dumps(a))
+        print(json.dumps(b))
+    for key in b:
+        topic = "config." + ".".join(path + [key])
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                if debug_below: print("0")
+                merge(a[key], b[key], path + [str(key)], notifier, debug_below=debug_below)
+            elif a[key] == b[key]:
+                if debug_below: print("1")
+                pass # same leaf value
+            elif isinstance(a[key], list) and isinstance(b[key], list):
+                if debug_below: print("A")
+                a_names = {}
+                for idx_a, el_a in enumerate(a[key]):
+                    if debug_below: print("B")
+                    a_names[el_a['name']] = idx_a
+                for idx_b, el_b in enumerate(b[key]):
+                    if debug_below: print("C")
+                    if el_b['name'] in a_names:
+                        if debug_below: print("D")
+                        merge(el_a, el_b, path + [str(key)] + [str(el_a['name'])], notifier, debug_below=debug_below)
+                    else:
+                        if debug_below: print("E")
+                        a[key] + el_b
+                        if debug_below: print("F")
+                        if notifier:
+                            notifier(path + [str(key)] + [str(el_a['name'])], el_b)
+            else:
+                if debug_below: print("2")
+                a[key] = b[key]
+                if notifier:
+                    notifier(topic, a[key])
+        else:
+            if debug_below: print("3")
+            a[key] = b[key]
+            if notifier:
+                notifier(topic, a[key])
+    if debug_below: print("Up!")
+    return a
 
 def serve_file(path_el):
     path = os.sep.join(path_el)
@@ -45,8 +91,9 @@ def get_config(request):
 
 @ampule.route("/api/config", method='POST')
 def post_config(request):
-    # print(json.dumps(request.body))
+    # print(request.body)
     # print("Got config!")
+    merge(request.context.target, json.loads(request.body), notifier=request.context.msgbus.pub)
     return (200, {}, json.dumps("OK!"))
 
 

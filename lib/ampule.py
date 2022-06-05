@@ -172,6 +172,23 @@ def listen(socket, context=None, timeout=30):
             )
     except BaseException as e:
         print("Error with request: {}: {}".format(type(e), e))
+        # print(json.dumps(e.__traceback__.tb_frame.__dict__))
+        # trace = []
+        # ex = e
+        # tb = ex.__traceback__
+        # while tb is not None:
+        #     trace.append({
+        #         "filename": tb.tb_frame.f_code.co_filename,
+        #         "name": tb.tb_frame.f_code.co_name,
+        #         "lineno": tb.tb_lineno
+        #     })
+        #     tb = tb.tb_next
+        # print(str({
+        #     'type': type(ex).__name__,
+        #     'message': str(ex),
+        #     'trace': trace
+        # }))
+        # print(json.dumps(e.__traceback__.tb_lineno))
         # print("Error with request", str(e))
         # print("Error with request:", str(json.dumps(e)))
         #traceback.print_exception(None, e, sys.exc_info()[2])

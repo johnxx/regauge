@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from asynccp.time import Duration
 from functools import partial
+import json
 
 debug = False
 def print_dbg(some_string, **kwargs):
@@ -18,7 +19,7 @@ class Passy():
         
     def sub(self, subscriber, topic_pref):
         sub_id = str(id(subscriber))
-        print_dbg("{} subscribed to {}".format(sub_id, topic_pref))
+        print_dbg("{} has been subscribed to {}".format(sub_id, topic_pref))
         self.subscribers[sub_id] = subscriber
         if sub_id not in self.subscriptions:
             self.subscriptions[sub_id] = set()
@@ -27,6 +28,7 @@ class Passy():
 
     def pub(self, topic, msg, auto_send=True):
         print_dbg("Got a message about {}".format(topic))
+        # print_dbg("{}: {}".format(topic, json.dumps(msg)))
         for sub_id, topic_prefs in self.subscriptions.items():
             for topic_pref in topic_prefs:
                 if topic.startswith(topic_pref):
@@ -61,6 +63,7 @@ class Passy():
     def send_all(self):
         print_dbg("Sending all events!")
         for sub_id in self.outbox:
+            # print("Sending updates for {}".format(sub_id))
             self.send(sub_id)
 
     def unsub(self, sub_id, topic_pref):

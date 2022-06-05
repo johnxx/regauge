@@ -10,9 +10,13 @@ MULTI_LED = "2"
 
 instrumentation = False
 instrumentation_ts = False
+dump_cfg = False
 
 class SimpleGauge(Gauge):
     def __init__(self, options, resources) -> None:
+        if dump_cfg:
+            print("options: {}".format(json.dumps(options)))
+            print("resources: {}".format(json.dumps(resources)))
         self.stream_spec = StreamSpec(**options['stream_spec'])
         self.ts = TimeSeries(stream_spec=self.stream_spec, **options['time_series'])
         self.options = options

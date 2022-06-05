@@ -21,6 +21,7 @@ class Face(GaugeFace):
         #     raise ValueError("stream_spec is required")
 
         self.options = self._apply_defaults(options)
+
         self.resources = resources
         self.ts = ts
         self._setup_display()
@@ -33,6 +34,10 @@ class Face(GaugeFace):
         self._setup_display()
     
     def _setup_display(self):
+        fc = self.options['font_color']
+        if(isinstance(fc, str)):
+            fc = fc[1:]
+            fc = int(fc, 16)
 
         for element in self.resources['display_group']:
             self.resources['display_group'].remove(element)
@@ -47,7 +52,7 @@ class Face(GaugeFace):
                                 anchor_point=(1.0, 0.5), anchored_position=(self.options['offset_x'], self.options['offset_y']))
             self.resources['display_group'].append(bg_text_area)
 
-        self.text_area = Label(font, text='', color=self.options['font_color'],
+        self.text_area = Label(font, text='', color=fc,
                                 anchor_point=(1.0, 0.5), anchored_position=(self.options['offset_x'], self.options['offset_y']))
         self.resources['display_group'].append(self.text_area)
     

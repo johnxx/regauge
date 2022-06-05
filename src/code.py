@@ -33,7 +33,7 @@ def initialize_gauges(layout, resources):
 
         resource_config = block['resource']
         gauge_resources = {}
-        print(json.dumps(resource_config))
+        # print(json.dumps(resource_config))
         if resource_config['ofType'] == NEOPIXEL_SLICE:
             if 'step' in resource_config and resource_config['step']:
                 keys = range(
@@ -66,12 +66,14 @@ def initialize_gauges(layout, resources):
         gauge_module = __import__('gauges.' + block['type'], None, None, [block['sub_type']])
         gauge_class = getattr(gauge_module, block['sub_type'])
         # gauge = gauge_class(gauge_options, resources, data)
-        print(json.dumps(gauge_resources))
+        # print(json.dumps(gauge_resources))
         gauge = gauge_class(block, gauge_resources)
         if 'config_bus' in resources:
-            resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(block['name']))
+            print("{} wants to subscribe to config.layout.{}".format(block['name'], block['name']))
+            resources['config_bus'].sub(gauge.config_updated, "config.layout.{}".format(block['name']))
         if 'data_bus' in resources:
             for field_spec in gauge.subscribed_streams:
+                print("{} wants to subscribe to {}".format(block['name'], field_spec))
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
         print("{}: {}Hz".format(block['name'], gauge.update_freq))
         gauge_tasks.append(asynccp.schedule(frequency=int(gauge.update_freq), coroutine_function=gauge.update))
@@ -82,6 +84,7 @@ def setup_tasks(config, resources):
         'data_sources': {},
         'gauges': [],
     }
+    msg_bus = None
     for data_source, options in config['data_sources'].items():
         if 'type' not in options:
             if data_source == 'config_listener':
@@ -91,9 +94,12 @@ def setup_tasks(config, resources):
                 options['type'] = 'tcp_msgpack'
             elif data_source == 'data_can':
                 options['type'] = 'canbus'
+            elif data_source == 'data_mock':
+                options['type'] = 'mock'
             else:
                 print("Failed to infer type for {}".format(data_source))
         if 'enabled' not in options:
+            print("Automatically enabled {}".format(data_source))
             options['enabled'] = True
         if options['enabled']:
             options.pop('enabled')
@@ -103,12 +109,18 @@ def setup_tasks(config, resources):
                 data_source_class = getattr(data_source_module, options['type']).ConfigSource
                 del options['type']
                 options.pop('config_source')
-                resources['config_bus'] = Passy(task_manager=asynccp)
+                if 'config_bus' not in resources: 
+                    if not msg_bus:
+                        msg_bus = Passy(task_manager=asynccp)
+                    resources['config_bus'] = msg_bus
                 data_source_obj = data_source_class(data_source, resources, config, **options)
             else:
                 data_source_class = getattr(data_source_module, options['type']).DataSource
                 del options['type']
-                resources['data_bus'] = Passy(task_manager=asynccp)
+                if 'data_bus' not in resources:
+                    if not msg_bus:
+                        msg_bus = Passy(task_manager=asynccp)
+                    resources['data_bus'] = msg_bus
                 data_source_obj = data_source_class(data_source, resources, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
     tasks['gauges'] = initialize_gauges(config['layout'], resources)

@@ -1,7 +1,7 @@
 import time
 import math
 
-debug = False
+debug = True
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -145,10 +145,11 @@ class DataSource():
            self.frame_idx = 0
         
     async def poll(self):
-        while self.mock_frames[self.frame_idx][0] not in self.send_frame_ids:
-            print_dbg("Current id: {}, not in {}".format(self.mock_frames[self.frame_idx][0], self.send_frame_ids))
-            self._advance_frame()
-            print_dbg("Advanced to {}".format(self.frame_idx))
+        if 'all' not in self.send_frame_ids:
+            while self.mock_frames[self.frame_idx][0] not in self.send_frame_ids:
+                print_dbg("Current id: {}, not in {}".format(self.mock_frames[self.frame_idx][0], self.send_frame_ids))
+                self._advance_frame()
+                print_dbg("Advanced to {}".format(self.frame_idx))
 
         res = self.process_mock_frame(self.mock_frames[self.frame_idx])
         payload = res[1]

@@ -1,7 +1,18 @@
+import json
 import time
+
+dump_cfg = False
+debug = False
+def print_dbg(some_string, **kwargs):
+    if debug:
+        return print(some_string, **kwargs)
+
 
 class TimeSeries():
     def __init__(self, stream_spec, upto_vals=1, retain_for_s=0) -> None:
+        if dump_cfg:
+            print("stream_spec: {}".format(json.dumps(stream_spec.__dict__)))
+            print("upto: {}, retain_for_s: {}".format(upto_vals, retain_for_s))
         self.upto_vals = upto_vals
         self.retain_for_s = retain_for_s
 
