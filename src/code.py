@@ -17,6 +17,7 @@ NEOPIXEL_SLICE = "1"
 LINE_GRAPH = "0"
 TEXT = "1"
 MULTI_LED = "2"
+ALPHA = "3"
 
 instrumentation = False
 debug = False

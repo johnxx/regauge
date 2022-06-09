@@ -7,6 +7,7 @@ import time
 LINE_GRAPH = "0"
 TEXT = "1"
 MULTI_LED = "2"
+ALPHA = "3"
 
 instrumentation = False
 instrumentation_ts = False
@@ -28,6 +29,8 @@ class SimpleGauge(Gauge):
                 options['gauge_face']['type'] = 'text'
             elif options['gauge_face']['ofType'] == MULTI_LED:
                 options['gauge_face']['type'] = 'multi_led'
+            elif options['gauge_face']['ofType'] == ALPHA:
+                options['gauge_face']['type'] = 'alpha'
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
         gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
         self.face = gauge_face_class(self.ts, options['gauge_face'], resources)
