@@ -60,8 +60,8 @@ class Face(GaugeFace):
             if x > q and left_x:
                 right = (x, y)
                 slope = (right[1] - left[1]) / (right[0] - left[0])
-                # @TODO: Uhm, that's probably not right.
-                return q, left[1] + (right[0] - q) * slope
+                # @TODO: Uhm, that's probably right.
+                return q, slope * (q - left[0])
     def _setup_display(self):
         
         y1 = 0 
