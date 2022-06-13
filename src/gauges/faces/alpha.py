@@ -75,16 +75,16 @@ class Face(GaugeFace):
                 left = (x, y)
             if x > q and left:
                 right = (x, y)
-                print("left: {}, right: {}, q: {}".format(left, right, q))
+                # print("left: {}, right: {}, q: {}".format(left, right, q))
                 slope = (right[1] - left[1]) / (right[0] - left[0])
                 # @TODO: Uhm, that's not quite right.
                 return int(slope * (q - left[0]) + left[1])
-        print("Comin' back around again")
+        # print("Comin' back around again")
         left = points[-1]
         right = points[0]
-        print("left: {}, right: {}, q: {}".format(left, right, q))
+        # print("left: {}, right: {}, q: {}".format(left, right, q))
         if right[0] == left[0]:
-            print("By special dispensation")
+            # print("By special dispensation")
             return int((right[1] + left[1])/2)
         slope = (right[1] - left[1]) / (right[0] - left[0])
         # @TODO: Uhm, that's not quite right.
@@ -104,37 +104,43 @@ class Face(GaugeFace):
 
         points = self.arc_points(r, math.pi-a1, math.pi-a2)
         points += self.arc_points(r, a2, a3)
-        points.append(self.o_tl((40,20)))
-        points.append(self.o_tl((30,0)))
+        # points.append(self.o_tl((20,20)))
+        # points.append(self.o_tl((10,0)))
 
         p = Polygon(points=points, outline=0xFF8888)
         self.display_group.append(p)
-        margin = 5
-        radius = 5
+        margin = 9 
+        radius = 5 
         _, bly = self.o_tl((0, y1 + margin + radius))
         blx = self.min_x(points, bly) + margin + radius
         print("blx: {}".format(blx))
-        segments = 15
+        segments = 10
         x = blx
         x_bonus = 20
-        bar = []
+        x_bonus_slope = 2
         while segments > 0:
-            y = self.min_y(points, x)
+            bar = []
+            y = self.min_y(points, x) - margin
             # c = Circle(x0=x, y0=y - margin, r=radius, outline=0xCCCCCC)
             # self.display_group.append(c)
-            bar += self.arc_points(radius, 0.5, 1.5, center=(x, y))
+            # bar += self.arc_points(radius, 0.5, 1.5, center=(x, y))
+            bar += self.arc_points(radius, -0*math.pi, -1*math.pi, center=self.tl_o((x, y)))
 
+            # top_x = x + x_bonus
             top_x = x + x_bonus
-            top_y = self.max_y(points, top_x)
+            top_y = self.max_y(points, top_x) + margin
             # c = Circle(x0=top_x, y0=top_y + margin, r=radius, outline=0xCCCCCC)
             # self.display_group.append(c)
-            bar += self.arc_points(radius, 1.5, 0.5, center=(top_x, top_y))
+
+            bar += self.arc_points(radius, 1*math.pi, 0*math.pi, center=self.tl_o((top_x, top_y)))
+
+            print("Lower: {}, Upper: {}".format((x,y), (top_x,top_y)))
+            bar_poly = Polygon(points=bar, outline=0x9944FF)
+            self.display_group.append(bar_poly)
 
             x += margin + radius
             segments -= 1
 
-        bar_poly = Polygon(points=bar, outline=0x9944FF)
-        self.display_group.append(bar_poly)
 
     # min max testing
     def test_min_max(self, poly, oqx, oqy):
