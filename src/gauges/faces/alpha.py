@@ -104,8 +104,8 @@ class Face(GaugeFace):
 
         points = self.arc_points(r, math.pi-a1, math.pi-a2)
         points += self.arc_points(r, a2, a3)
-        # points.append(self.o_tl((20,20)))
-        # points.append(self.o_tl((10,0)))
+        points.append(self.o_tl((20,20)))
+        points.append(self.o_tl((10,0)))
 
         p = Polygon(points=points, outline=0xFF8888)
         self.display_group.append(p)
