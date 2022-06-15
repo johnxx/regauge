@@ -50,6 +50,79 @@ def poly_xings(poly, seg):
         n += 1
     return xings
 
+def poly_bbox(points):
+    min_x, min_y, max_x, max_y = [None] * 4
+    for x, y in points:
+        if min_x == None or x > min_x:
+            min_x = x
+        if max_x == None or x < max_x:
+            max_x = x
+        if min_y == None or y > min_y:
+            min_y = y
+        if max_y == None or y < max_y:
+            max_y = y
+    return (min_x, min_y), (max_x, max_y)
+
+def arc_points(r, a1, a2, center=(0, 0), segments=None):
+    if not segments:
+        segments = abs((a2 - a1) * 36)
+    points = []
+    a = a1
+    s = 0
+    while s <= segments:
+        x = int(r * math.cos(a)) + center[0]
+        y = int(r * math.sin(a)) + center[1]
+        a += (a2 - a1)/segments
+        s += 1
+        points.append(o_tl((x, y)))
+
+    return points
+
+
+def height_to_angle(h):
+    return math.asin(h/y_offset)
+
+def o_tl(p):
+    return p[0] + x_offset, -p[1] + y_offset
+
+def tl_o(p):
+    return p[0] - x_offset, y_offset - p[1]
+
+# Results undefined if q outside of polygon
+def min_x(points, q):
+    return max_x(points[::-1], q)
+
+# Results undefined if q outside of polygon
+def max_x(points, q):
+    return max_y(list(map(lambda p: (p[1], p[0]), points)), q)
+
+# Results undefined if q outside of polygon
+def min_y(points, q):
+    return max_y(points[::-1], q)
+
+# Results undefined if q outside of polygon
+def max_y(points, q):
+    left = None
+    for x, y in points:
+        if x < q:
+            left = (x, y)
+        if x > q and left:
+            right = (x, y)
+            # print("left: {}, right: {}, q: {}".format(left, right, q))
+            slope = (right[1] - left[1]) / (right[0] - left[0])
+            # @TODO: Uhm, that's not quite right.
+            return int(slope * (q - left[0]) + left[1])
+    # print("Comin' back around again")
+    left = points[-1]
+    right = points[0]
+    # print("left: {}, right: {}, q: {}".format(left, right, q))
+    if right[0] == left[0]:
+        # print("By special dispensation")
+        return int((right[1] + left[1])/2)
+    slope = (right[1] - left[1]) / (right[0] - left[0])
+    # @TODO: Uhm, that's not quite right.
+    return int(slope * (q - left[0]) + left[1])
+
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -62,103 +135,41 @@ class Face(GaugeFace):
         'bar_color':0xFF8888, 
     }
 
-    def arc_points(self, r, a1, a2, center=(0, 0), segments=None):
-        if not segments:
-            segments = abs((a2 - a1) * 36)
-        points = []
-        a = a1
-        s = 0
-        while s <= segments:
-            x = int(r * math.cos(a)) + center[0]
-            y = int(r * math.sin(a)) + center[1]
-            a += (a2 - a1)/segments
-            s += 1
-            points.append(self.o_tl((x, y)))
-
-        return points
-
-
-    def height_to_angle(self, h):
-        return math.asin(h/y_offset)
-    
-    def o_tl(self, p):
-        return p[0] + x_offset, -p[1] + y_offset
-    
-    def tl_o(self, p):
-        return p[0] - x_offset, y_offset - p[1]
-    
-    # Results undefined if q outside of polygon
-    def min_x(self, points, q):
-        return self.max_x(points[::-1], q)
-
-    # Results undefined if q outside of polygon
-    def max_x(self, points, q):
-        return self.max_y(list(map(lambda p: (p[1], p[0]), points)), q)
-
-    # Results undefined if q outside of polygon
-    def min_y(self, points, q):
-        return self.max_y(points[::-1], q)
-
-    # Results undefined if q outside of polygon
-    def max_y(self, points, q):
-        left = None
-        for x, y in points:
-            if x < q:
-                left = (x, y)
-            if x > q and left:
-                right = (x, y)
-                # print("left: {}, right: {}, q: {}".format(left, right, q))
-                slope = (right[1] - left[1]) / (right[0] - left[0])
-                # @TODO: Uhm, that's not quite right.
-                return int(slope * (q - left[0]) + left[1])
-        # print("Comin' back around again")
-        left = points[-1]
-        right = points[0]
-        # print("left: {}, right: {}, q: {}".format(left, right, q))
-        if right[0] == left[0]:
-            # print("By special dispensation")
-            return int((right[1] + left[1])/2)
-        slope = (right[1] - left[1]) / (right[0] - left[0])
-        # @TODO: Uhm, that's not quite right.
-        return int(slope * (q - left[0]) + left[1])
-
-        
-
-
-
-
     def _setup_display(self):
         
         y1 = 0 
         y2 = 80 
         y3 = 20 
         
-        a1 = self.height_to_angle(y1)
-        a2 = self.height_to_angle(y2)
-        a3 = self.height_to_angle(y3)
+        a1 = height_to_angle(y1)
+        a2 = height_to_angle(y2)
+        a3 = height_to_angle(y3)
 
         r = 105
 
-        points = self.arc_points(r, math.pi-a1, math.pi-a2)
-        points += self.arc_points(r, a2, a3)
-        points.append(self.o_tl((20,20)))
-        points.append(self.o_tl((10,0)))
+        points = arc_points(r, math.pi-a1, math.pi-a2)
+        points += arc_points(r, a2, a3)
+        points.append(o_tl((20,20)))
+        points.append(o_tl((10,0)))
+        bl, tr = poly_bbox(points)
+        c1 = Circle(x0=bl[0], y0=bl[1], r=5, outline=0xCCCCCC)
+        self.display_group.append(c1)
+        c2 = Circle(x0=tr[0], y0=tr[1], r=5, outline=0xCCCCCC)
+        self.display_group.append(c2)
 
         p = Polygon(points=points, outline=0xCCCCCC)
-        line = [array([100, 10]), array([120, 130])]
-        print(line[0][0])
-        print(line[1][0])
-        print(line[0][1])
-        print(line[1][1])
+        line = [array([0, 50]), array([120, 130])]
         l1 = Line(x0=int(line[0][0]), y0=int(line[0][1]), x1=int(line[1][0]), y1=int(line[1][1]), color=0xCCFFCC)
         self.display_group.append(p)
         self.display_group.append(l1)
         xings = poly_xings(points, line)
-        print(json.dumps(xings))
+        for n in xings:
+            c = Circle(x0=int(n[0]), y0=int(n[1]), r=5, outline=0xCCCCCC)
+            self.display_group.append(c)
         margin = 9 
         radius = 5 
-        _, bly = self.o_tl((0, y1 + margin + radius))
-        blx = self.min_x(points, bly) + margin + radius
+        _, bly = o_tl((0, y1 + margin + radius))
+        blx = min_x(points, bly) + margin + radius
         print("blx: {}".format(blx))
         total_segments = 10
         x = blx
@@ -194,26 +205,40 @@ class Face(GaugeFace):
         #     pal[idx] = val
         segments = total_segments
         while segments > 0:
+            # place the leftmost point 
+            # figure out the slope of the line based on the passed in angle
+            # draw a segment between leftmost point and the lower intersection
+            # draw a segment between leftmost point and the upper intersection
+            # Get the new segment into its own variable
+            # figure out where it crosses the bottom and top of the polygon
+            # Move $margin points in along the segment, taking slope into account
+            # with these new points, draw the actual bar
+            # Move right x points from the leftmost point and repeat
+            x += margin + radius
+            segments -= 1
+            
+        while segments > 0:
             bar = []
-            y = self.min_y(points, x) - margin
+            y = min_y(points, x) - margin
             # c = Circle(x0=x, y0=y - margin, r=radius, outline=0xCCCCCC)
             # self.display_group.append(c)
             # bar += self.arc_points(radius, 0.5, 1.5, center=(x, y))
-            bar += self.arc_points(radius, -0*math.pi, -1*math.pi, center=self.tl_o((x, y)))
+            bar += arc_points(radius, -0*math.pi, -1*math.pi, center=tl_o((x, y)))
 
             # top_x = x + x_bonus
             top_x = x + x_bonus
-            top_y = self.max_y(points, top_x) + margin
+            top_y = max_y(points, top_x) + margin
             # c = Circle(x0=top_x, y0=top_y + margin, r=radius, outline=0xCCCCCC)
             # self.display_group.append(c)
 
-            bar += self.arc_points(radius, 1*math.pi, 0*math.pi, center=self.tl_o((top_x, top_y)))
+            bar += arc_points(radius, 1*math.pi, 0*math.pi, center=tl_o((top_x, top_y)))
 
             print("Lower: {}, Upper: {}".format((x,y), (top_x,top_y)))
             pal = displayio.Palette(1)
             pal[0] = colors[total_segments - segments]
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
-            bar_poly_outline = Polygon(points=bar, outline=pal[0] + 0x1111)
+            # bar_poly_outline = Polygon(points=bar, outline=pal[0] + 0x1111)
+            bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
             # bar_poly.color_index = total_segments - segments
             self.display_group.append(bar_poly)
             self.display_group.append(bar_poly_outline)
@@ -224,15 +249,15 @@ class Face(GaugeFace):
 
     # min max testing
     def test_min_max(self, poly, oqx, oqy):
-        qx, _ = self.o_tl((oqx, 0))
-        miny = self.min_y(poly, qx)
-        maxy = self.max_y(poly, qx)
+        qx, _ = o_tl((oqx, 0))
+        miny = min_y(poly, qx)
+        maxy = max_y(poly, qx)
         l1 = Line(x0=qx, y0=miny, x1=qx, y1=maxy, color=0xCCFFCC)
         self.display_group.append(l1)
 
-        qy, _ = self.o_tl((oqy, 0))
-        minx = self.min_x(poly, qy)
-        maxx = self.max_x(poly, qy)
+        qy, _ = o_tl((oqy, 0))
+        minx = min_x(poly, qy)
+        maxx = max_x(poly, qy)
         l2 = Line(x0=minx, y0=qy, x1=maxx, y1=qy, color=0xCCCCFF)
         self.display_group.append(l2)
         # print("max: {}".format((q, self.max_y(points, q))))
