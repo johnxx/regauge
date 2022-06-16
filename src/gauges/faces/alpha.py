@@ -39,6 +39,8 @@ def seg_intersect(a1, a2, b1, b2):
     return (num / denom) * db + b1
 
 def poly_xings(poly, seg):
+    print(seg)
+    seg = array([seg[0], seg[1]])
     xings = []
     n = -1
     end = len(poly)
@@ -48,7 +50,7 @@ def poly_xings(poly, seg):
         if intersect(p1, p2, seg[0], seg[1]):
             xings.append(seg_intersect(p1, p2, seg[0], seg[1]))
         n += 1
-    return xings
+    return sorted(xings, key=lambda p: p[1])
 
 def poly_bbox(points):
     min_x, min_y, max_x, max_y = [None] * 4
@@ -70,8 +72,8 @@ def arc_points(r, a1, a2, center=(0, 0), segments=None):
     a = a1
     s = 0
     while s <= segments:
-        x = int(r * math.cos(a)) + center[0]
-        y = int(r * math.sin(a)) + center[1]
+        x = int(r * math.cos(a) + center[0])
+        y = int(r * math.sin(a) + center[1])
         a += (a2 - a1)/segments
         s += 1
         points.append(o_tl((x, y)))
@@ -150,45 +152,33 @@ class Face(GaugeFace):
     }
 
     def _setup_display(self):
-        y1 = 0 
-        y2 = 80 
-        y3 = 20 
-        
-        a1 = height_to_angle(y1)
-        a2 = height_to_angle(y2)
-        a3 = height_to_angle(y3)
+        def setup_bezel():
+            y1 = 0 
+            y2 = 80 
+            y3 = 20 
+            
+            a1 = height_to_angle(y1)
+            a2 = height_to_angle(y2)
+            a3 = height_to_angle(y3)
 
-        r = 105
+            r = 105
 
-        points = arc_points(r, math.pi-a1, math.pi-a2)
-        points += arc_points(r, a2, a3)
-        points.append(o_tl((20,20)))
-        points.append(o_tl((10,0)))
-        # bl, tr = poly_bbox(points)
-        # c1 = Circle(x0=bl[0], y0=bl[1], r=5, outline=0xCCCCCC)
-        # self.display_group.append(c1)
-        # c2 = Circle(x0=tr[0], y0=tr[1], r=5, outline=0xCCCCCC)
-        # self.display_group.append(c2)
+            points = arc_points(r, math.pi-a1, math.pi-a2)
+            points += arc_points(r, a2, a3)
+            points.append(o_tl((20,20)))
+            points.append(o_tl((10,0)))
 
-        # line = [array([0, 50]), array([120, 130])]
-        # l1 = Line(x0=int(line[0][0]), y0=int(line[0][1]), x1=int(line[1][0]), y1=int(line[1][1]), color=0xCCFFCC)
-        # self.display_group.append(p)
-        # self.display_group.append(l1)
-        # xings = poly_xings(points, line)
-        # for n in xings:
-        #     c = Circle(x0=int(n[0]), y0=int(n[1]), r=5, outline=0xCCCCCC)
-        #     self.display_group.append(c)
+            return points
 
-        p = Polygon(points=points, outline=0xCCCCCC)
+        bezel = setup_bezel()
+        p = Polygon(points=bezel, outline=0xCCCCCC)
         self.display_group.append(p)
-        margin = 9 
-        radius = 5 
-        _, bly = o_tl((0, y1 + margin + radius))
-        blx = poly_line_min_x(points, bly) + margin + radius
-        print("blx: {}".format(blx))
-        total_segments = 10
-        x = blx
-        x_bonus = 20
+
+        total_segments = 19
+        margin = 5 
+        radius = 2.5 
+        a = .4*math.pi
+
         colors = [
             0x0000ff,
             0x0044ff,
@@ -200,75 +190,66 @@ class Face(GaugeFace):
             0x00c0ff,
             0x00cfff,
             0x00ddff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
+            0x00eaff,
             0x00eaff
         ]
-        # pal = displayio.Palette(len(colors))
-        # for idx, val in enumerate(colors):
-        #     pal[idx] = val
-        bl, tr = poly_bbox(points)
-        mid_y = (tr[1]+bl[1])/2
-        left_mid = (poly_line_min_x(points, mid_y) + 15, int(mid_y))
-        bar_angle = .4*math.pi
-        bar_slope = math.tan(bar_angle)
-        print(bar_angle*(180/math.pi))
 
-        c1 = Circle(x0=left_mid[0], y0=left_mid[1], r=5, outline=0xCCCCCC)
-        self.display_group.append(c1)
+        def seg_inside(poly, margin, a, offset=0):
+            bl, tr = poly_bbox(poly)
+            mid_y = (tr[1]+bl[1])/2
+            left_mid = (poly_line_min_x(poly, mid_y) + offset + margin, int(mid_y))
+            slope = math.tan(a)
 
-        top_y = tr[1] - 10
-        top_x = left_mid[0] + (1/bar_slope)*(mid_y-top_y)
+            top_y = tr[1] - 2
+            top_x = left_mid[0] + (1/slope)*(mid_y-top_y)
 
-        bottom_y = bl[1] + 10
-        bottom_x = left_mid[0] + (1/bar_slope)*(mid_y-bottom_y)
-        print((bottom_x, bottom_y))
+            bottom_y = bl[1] + 2
+            bottom_x = left_mid[0] + (1/slope)*(mid_y-bottom_y)
 
-        l0 = Line(x0=int(bottom_x), y0=int(bottom_y), x1=int(top_x), y1=int(top_y), color=0xCCFFCC)
-        self.display_group.append(l0)
-        # ten_above = array([(bl[0], tr[1] - 10), (tr[0], tr[1] - 10)])
-        # l1 = Line(x0=int(ten_above[0][0]), y0=int(ten_above[0][1]), x1=int(ten_above[1][0]), y1=int(ten_above[1][1]), color=0xCCFFCC)
-        # self.display_group.append(l1)
+            outer_seg = (bottom_x, bottom_y), (top_x, top_y)
+            top_xing, bottom_xing = poly_xings(poly, outer_seg)
+
+            it_y = top_xing[1] + margin
+            it_x = left_mid[0] + (1/slope)*(mid_y-it_y)
+            inner_top = (it_x, it_y)
+            
+            ib_y = bottom_xing[1] - margin
+            ib_x = left_mid[0] + (1/slope)*(mid_y-ib_y)
+            inner_bottom = (ib_x, ib_y)
+            
+            return inner_top, inner_bottom
+            
+        def barify(s, r):
+            bar = []
+            bar += arc_points(r, 1*math.pi, 0*math.pi, center=tl_o(s[0]))
+            bar += arc_points(r, -0*math.pi, -1*math.pi, center=tl_o(s[1]))
+            return bar
 
         segments = total_segments
+
+        offset = 10
         while segments > 0:
-            # place the leftmost point 
-            # figure out the slope of the line based on the passed in angle
-            # draw a segment between leftmost point and the lower intersection
-            # draw a segment between leftmost point and the upper intersection
-            # Get the new segment into its own variable
-            # figure out where it crosses the bottom and top of the polygon
-            # Move $margin points in along the segment, taking slope into account
-            # with these new points, draw the actual bar
-            # Move right x points from the leftmost point and repeat
-            x += margin + radius
-            segments -= 1
+            si = seg_inside(bezel, margin, a, offset=offset)
+            bar = barify(si, radius)
             
-        while segments > 0:
-            bar = []
-            y = poly_line_min_y(points, x) - margin
-            # c = Circle(x0=x, y0=y - margin, r=radius, outline=0xCCCCCC)
-            # self.display_group.append(c)
-            # bar += self.arc_points(radius, 0.5, 1.5, center=(x, y))
-            bar += arc_points(radius, -0*math.pi, -1*math.pi, center=tl_o((x, y)))
-
-            # top_x = x + x_bonus
-            top_x = x + x_bonus
-            top_y = poly_line_max_y(points, top_x) + margin
-            # c = Circle(x0=top_x, y0=top_y + margin, r=radius, outline=0xCCCCCC)
-            # self.display_group.append(c)
-
-            bar += arc_points(radius, 1*math.pi, 0*math.pi, center=tl_o((top_x, top_y)))
-
-            print("Lower: {}, Upper: {}".format((x,y), (top_x,top_y)))
             pal = displayio.Palette(1)
             pal[0] = colors[total_segments - segments]
+
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
-            # bar_poly_outline = Polygon(points=bar, outline=pal[0] + 0x1111)
             bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
-            # bar_poly.color_index = total_segments - segments
+
             self.display_group.append(bar_poly)
             self.display_group.append(bar_poly_outline)
-
-            x += margin + radius
+            
+            offset += margin*2
             segments -= 1
 
 
