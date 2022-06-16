@@ -165,7 +165,8 @@ class Face(GaugeFace):
 
             points = arc_points(r, math.pi-a1, math.pi-a2)
             points += arc_points(r, a2, a3)
-            points.append(o_tl((20,20)))
+            points[-1] = (points[-1][0], -y3+y_offset)
+            points.append(o_tl((18,20)))
             points.append(o_tl((10,0)))
 
             return points
@@ -251,25 +252,6 @@ class Face(GaugeFace):
             
             offset += margin*2
             segments -= 1
-
-
-    # min max testing
-    def test_min_max(self, poly, oqx, oqy):
-        qx, _ = o_tl((oqx, 0))
-        miny = poly_line_min_y(poly, qx)
-        maxy = poly_line_max_y(poly, qx)
-        l1 = Line(x0=qx, y0=miny, x1=qx, y1=maxy, color=0xCCFFCC)
-        self.display_group.append(l1)
-
-        qy, _ = o_tl((oqy, 0))
-        minx = poly_line_min_x(poly, qy)
-        maxx = poly_line_max_x(poly, qy)
-        l2 = Line(x0=minx, y0=qy, x1=maxx, y1=qy, color=0xCCCCFF)
-        self.display_group.append(l2)
-        # print("max: {}".format((q, self.max_y(points, q))))
-        # print("o max: {}".format(self.tl_o((q, self.max_y(points, q)))))
-        # print("min: {}".format((q, self.min_y(points, q))))
-        # print("o min: {}".format(self.tl_o((q, self.min_y(points, q)))))
 
     def __init__(self, ts, options, resources) -> None:
         if dump_cfg:
