@@ -177,30 +177,28 @@ class Face(GaugeFace):
 
         total_segments = 19
         margin = 5 
-        radius = 2.5 
+        radius = 3.5 
         a = .4*math.pi
-
         colors = [
-            0x0000ff,
-            0x0044ff,
-            0x0062ff,
-            0x007aff,
-            0x008eff,
-            0x00a0ff,
-            0x00b0ff,
-            0x00c0ff,
-            0x00cfff,
-            0x00ddff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff,
-            0x00eaff
+            0xfac76e,
+            0xffbb6f,
+            0xffaf72,
+            0xffa477,
+            0xff997d,
+            0xfd8f84,
+            0xf6878c,
+            0xee8093,
+            0xe37a9a,
+            0xd676a1,
+            0xc673a6,
+            0xb671aa,
+            0xa36fad,
+            0x8f6eae,
+            0x7a6cad,
+            0x646baa,
+            0x4c69a5,
+            0x31669e,
+            0x066395
         ]
 
         def seg_inside(poly, margin, a, offset=0):
@@ -228,10 +226,10 @@ class Face(GaugeFace):
             
             return inner_top, inner_bottom
             
-        def barify(s, r):
+        def barify(s, r, a=0):
             bar = []
-            bar += arc_points(r, 1*math.pi, 0*math.pi, center=tl_o(s[0]))
-            bar += arc_points(r, -0*math.pi, -1*math.pi, center=tl_o(s[1]))
+            bar += arc_points(r, 1*math.pi-1/a, 0*math.pi-1/a, center=tl_o(s[0]))
+            bar += arc_points(r, -0*math.pi-1/a, -1*math.pi-1/a, center=tl_o(s[1]))
             return bar
 
         segments = total_segments
@@ -239,16 +237,16 @@ class Face(GaugeFace):
         offset = 10
         while segments > 0:
             si = seg_inside(bezel, margin, a, offset=offset)
-            bar = barify(si, radius)
+            bar = barify(si, radius, a=a)
             
             pal = displayio.Palette(1)
             pal[0] = colors[total_segments - segments]
 
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
-            bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
+            # bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
 
             self.display_group.append(bar_poly)
-            self.display_group.append(bar_poly_outline)
+            # self.display_group.append(bar_poly_outline)
             
             offset += margin*2
             segments -= 1
