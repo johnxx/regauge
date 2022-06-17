@@ -139,6 +139,38 @@ def min_y(points):
             point_low_y = (x, y)
     return point_low_y
 
+def seg_inside(poly, margin, a, offset=0):
+    bl, tr = poly_bbox(poly)
+    mid_y = (tr[1]+bl[1])/2
+    left_mid = (poly_line_min_x(poly, mid_y) + offset + margin, int(mid_y))
+    slope = math.tan(a)
+
+    top_y = tr[1] - 2
+    top_x = left_mid[0] + (1/slope)*(mid_y-top_y)
+
+    bottom_y = bl[1] + 2
+    bottom_x = left_mid[0] + (1/slope)*(mid_y-bottom_y)
+
+    outer_seg = (bottom_x, bottom_y), (top_x, top_y)
+    top_xing, bottom_xing = poly_xings(poly, outer_seg)
+
+    it_y = top_xing[1] + margin
+    it_x = left_mid[0] + (1/slope)*(mid_y-it_y)
+    inner_top = (it_x, it_y)
+    
+    ib_y = bottom_xing[1] - margin
+    ib_x = left_mid[0] + (1/slope)*(mid_y-ib_y)
+    inner_bottom = (ib_x, ib_y)
+    
+    return inner_top, inner_bottom
+    
+def barify(s, r, a=0):
+    bar = []
+    bar += arc_points(r, 1*math.pi-1/a, 0*math.pi-1/a, center=tl_o(s[0]))
+    bar += arc_points(r, -0*math.pi-1/a, -1*math.pi-1/a, center=tl_o(s[1]))
+    return bar
+
+
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -201,55 +233,27 @@ class Face(GaugeFace):
             0x066395
         ]
 
-        def seg_inside(poly, margin, a, offset=0):
-            bl, tr = poly_bbox(poly)
-            mid_y = (tr[1]+bl[1])/2
-            left_mid = (poly_line_min_x(poly, mid_y) + offset + margin, int(mid_y))
-            slope = math.tan(a)
-
-            top_y = tr[1] - 2
-            top_x = left_mid[0] + (1/slope)*(mid_y-top_y)
-
-            bottom_y = bl[1] + 2
-            bottom_x = left_mid[0] + (1/slope)*(mid_y-bottom_y)
-
-            outer_seg = (bottom_x, bottom_y), (top_x, top_y)
-            top_xing, bottom_xing = poly_xings(poly, outer_seg)
-
-            it_y = top_xing[1] + margin
-            it_x = left_mid[0] + (1/slope)*(mid_y-it_y)
-            inner_top = (it_x, it_y)
-            
-            ib_y = bottom_xing[1] - margin
-            ib_x = left_mid[0] + (1/slope)*(mid_y-ib_y)
-            inner_bottom = (ib_x, ib_y)
-            
-            return inner_top, inner_bottom
-            
-        def barify(s, r, a=0):
-            bar = []
-            bar += arc_points(r, 1*math.pi-1/a, 0*math.pi-1/a, center=tl_o(s[0]))
-            bar += arc_points(r, -0*math.pi-1/a, -1*math.pi-1/a, center=tl_o(s[1]))
-            return bar
-
-        segments = total_segments
+        current_segment = 0
 
         offset = 10
-        while segments > 0:
+        segments = []
+        while current_segment < total_segments:
             si = seg_inside(bezel, margin, a, offset=offset)
             bar = barify(si, radius, a=a)
             
-            pal = displayio.Palette(1)
-            pal[0] = colors[total_segments - segments]
-
+            pal = displayio.Palette(2)
+            pal[0] = 0x222222
+            pal[1] = colors[current_segment]
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
             # bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
 
             self.display_group.append(bar_poly)
+            segments.append(bar_poly)
             # self.display_group.append(bar_poly_outline)
             
             offset += margin*2
-            segments -= 1
+            current_segment += 1
+        return segments
 
     def __init__(self, ts, options, resources) -> None:
         if dump_cfg:
@@ -268,7 +272,8 @@ class Face(GaugeFace):
             self.current_second = math.floor(time.monotonic())
             self.frames_this_second = 0
 
-        self._setup_display()
+        self.segments = self._setup_display()
+        self.last_lit = 0
 
     @property
     def num_seg_x(self):
@@ -286,5 +291,22 @@ class Face(GaugeFace):
         # print("Showing value {} as pct {}".format(v, as_pct))
         return (self.height - math.floor(as_pct*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
+    def pick_seg(self, v):
+        as_pct = (v - self.ts.stream_spec.min_val) / self.ts.stream_spec.max_val 
+        if as_pct > 1:
+            as_pct = 1
+        elif as_pct < 0:
+            as_pct = 0
+        return math.floor(as_pct * len(self.segments))
+
     def update(self):
-        pass
+        lit = self.pick_seg(self.ts.value)
+        if lit > self.last_lit:
+            for n in range(self.last_lit, lit):
+                s = self.segments[n]
+                s.color_index = 1
+        elif lit < self.last_lit:
+            for n in range(lit, self.last_lit):
+                s = self.segments[n]
+                s.color_index = 0
+        self.last_lit = lit
