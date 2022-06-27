@@ -1,0 +1,84 @@
+{
+  "data_sources": {
+    "data_listener": {
+      "poll_freq": 10,
+      "type": "tcp_msgpack",
+      "enabled": false,
+      "listen_port": 4557,
+      "bind_addr": "0.0.0.0"
+    },
+    "data_mock": {
+      "enabled": true,
+      "poll_freq": 30,
+      "send_frame_ids": [
+        "all"
+      ]
+    },
+    "config_listener": {
+      "enabled": false,
+      "bind_addr": "0.0.0.0",
+      "listen_port": 80
+    },
+    "data_can": {
+      "poll_freq": 30
+    }
+  },
+  "hardware": {
+    "wifi": {
+      "enabled": false,
+      "passphrase": "<redacted>",
+      "ssid": "SomethingClever"
+    },
+    "can": {
+      "enabled": true,
+      "pins": {
+        "tx": "TX",
+        "rx": "RX"
+      },
+      "bit_rate": 500000
+    },
+    "lcd": {
+      "enabled": true,
+      "pins": {
+        "rst": "D10",
+        "cs": "D20",
+        "dc": "D21",
+        "bl": "D11"
+      },
+      "height": 240,
+      "width": 240
+    },
+    "leds": {
+      "order": "GRB",
+      "pins": {
+        "data": "D16"
+      },
+      "enabled": true,
+      "brightness": 0.1,
+      "number": 16
+    }
+  },
+  "layout": [
+    {
+      "name": "oilpres",
+      "update_freq": 15,
+      "time_series": {
+        "upto_vals": 1
+      },
+      "stream_spec": {
+        "field_spec": "eng_rpm",
+        "units": "psi",
+        "min_val": 0,
+        "max_val": 8000
+      },
+      "gauge_face": {
+        "ofType": "3"
+      },
+      "resource": {
+        "ofType": "0",
+        "x_offset": 0,
+        "y_offset": 0
+      }
+    }
+  ]
+}

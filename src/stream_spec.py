@@ -25,7 +25,7 @@ class StreamSpec():
             'suffix': 'l',
             'conversion_factor': 0.0078125,
         },
-        'emu_oilpres': {
+        'psi': {
             'name': 'lb/in^2',
             'suffix': 'psi',
             'conversion_factor': 1

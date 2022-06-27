@@ -212,8 +212,8 @@ class Face(GaugeFace):
         def setup_label(opts, x=0, y=0):
             font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
             return Label(font, text='', color=opts['font_color'], scale=1,
-                                    anchor_point=(0, 0), anchored_position=(x, y))
-        self.label = setup_label(self.options, 145, 105)
+                                    anchor_point=(1, 0), anchored_position=(x, y))
+        self.label = setup_label(self.options, 225, 105)
         self.display_group.append(self.label)
 
         total_segments = 19
@@ -293,6 +293,7 @@ class Face(GaugeFace):
             print("options: {}".format(json.dumps(options)))
             print("resources: {}".format(json.dumps(resources)))
         self.ts = ts
+        print(json.dumps(self.ts.stream_spec.__dict__))
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.display_group = resources['display_group']
@@ -302,22 +303,6 @@ class Face(GaugeFace):
 
         self.segments = self._setup_display()
         self.last_lit = 0
-
-    @property
-    def num_seg_x(self):
-        return math.floor(self.width / self.seg_x)
-
-    @property
-    def num_seg_y(self):
-        return math.floor(self.height / self.seg_y)
-
-    def pick_x(self, v):
-        return math.floor(self.last_x+self.seg_x)
-        
-    def pick_y(self, v):
-        as_pct = (v - self.ts.stream_spec.min_val) / self.ts.stream_spec.max_val
-        # print("Showing value {} as pct {}".format(v, as_pct))
-        return (self.height - math.floor(as_pct*(self.height-self.margin_bottom-self.margin_top)))-self.margin_bottom
 
     def pick_seg(self, v):
         as_pct = (v - self.ts.stream_spec.min_val) / self.ts.stream_spec.max_val 
