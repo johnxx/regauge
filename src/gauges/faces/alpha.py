@@ -178,8 +178,10 @@ def print_dbg(some_string, **kwargs):
 class Face(GaugeFace):
     default_options = {
         # 'label_font': 'UpheavalTT-BRK--20.bdf',
-        'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
+        # 'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
+         'label_font': 'PixelLCD-7-16.bdf',
         'font_color':0xCCCCCC, 
+        'fmt_string': "{:>3.0f}{}", 
         'bar_color':0xFF8888, 
     }
 
@@ -207,10 +209,18 @@ class Face(GaugeFace):
         p = Polygon(points=bezel, outline=0xCCCCCC)
         self.display_group.append(p)
 
+        def setup_label(opts, x=0, y=0):
+            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
+            return Label(font, text='', color=opts['font_color'], scale=1,
+                                    anchor_point=(0, 0), anchored_position=(x, y))
+        self.label = setup_label(self.options, 145, 105)
+        self.display_group.append(self.label)
+
         total_segments = 19
         margin = 5 
         radius = 3.5 
         a = .4*math.pi
+        # yellow to blue/purple: 10/10 for general gauge
         colors = [
             0xfac76e,
             0xffbb6f,
@@ -232,6 +242,28 @@ class Face(GaugeFace):
             0x31669e,
             0x066395
         ]
+        # blue to yellow with green in the middle 8/10 looks nice
+        # colors = [
+        #     0x2b7ea9,
+        #     0x0086b0,
+        #     0x008eb5,
+        #     0x0096b8,
+        #     0x009eb8,
+        #     0x00a6b6,
+        #     0x00adb1,
+        #     0x00b4aa,
+        #     0x00baa1,
+        #     0x00c096,
+        #     0x00c689,
+        #     0x23cb7b,
+        #     0x50d06b,
+        #     0x70d45b,
+        #     0x8ed74b,
+        #     0xaad939,
+        #     0xc6da27,
+        #     0xe2da13,
+        #     0xffd800
+        # ]
 
         current_segment = 0
 
@@ -268,10 +300,6 @@ class Face(GaugeFace):
         self.palette = displayio.Palette(1) 
         self.palette[0] = 0xFFFFFF
 
-        if instrumentation:
-            self.current_second = math.floor(time.monotonic())
-            self.frames_this_second = 0
-
         self.segments = self._setup_display()
         self.last_lit = 0
 
@@ -300,7 +328,10 @@ class Face(GaugeFace):
         return math.floor(as_pct * len(self.segments))
 
     def update(self):
+        self.label.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
         lit = self.pick_seg(self.ts.value)
+        if lit == self.last_lit:
+            return
         if lit > self.last_lit:
             for n in range(self.last_lit, lit):
                 s = self.segments[n]

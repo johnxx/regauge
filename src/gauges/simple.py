@@ -9,7 +9,7 @@ TEXT = "1"
 MULTI_LED = "2"
 ALPHA = "3"
 
-instrumentation = False
+instrumentation = True
 instrumentation_ts = False
 dump_cfg = False
 

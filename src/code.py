@@ -166,8 +166,10 @@ def setup_hardware(hardware):
         spi = board.SPI()
         while not spi.try_lock():
             pass
-        # spi.configure(baudrate=24000000) # Configure SPI for 24MHz
-        spi.configure(baudrate=80000000) # Configure SPI for 24MHz
+        #desired_baudrate = 80_000_000
+        desired_baudrate = 160_000_000
+        spi.configure(baudrate=desired_baudrate) # Configure SPI for 80MHz
+        print("Asked for {}Hz. Got {}Hz".format(desired_baudrate, spi.frequency))
         spi.unlock()
 
         # Release any currently in-use displays for good measure
