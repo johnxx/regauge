@@ -29,7 +29,7 @@ class TimeSeries():
         for topic, value in updates:
             (prefix, field_spec) = topic.split(".")
             if prefix == 'data' and self.stream_spec.field_spec == field_spec:
-                val = int(value * self.stream_spec.units['conversion_factor'])
+                val = value * self.stream_spec.units['conversion_factor']
                 self.latest = (tstamp, val)
 
     @property

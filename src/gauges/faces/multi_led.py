@@ -93,7 +93,7 @@ class Face(GaugeFace):
         if self.prev_idx == self.cur_idx:
             return
         print_dbg("Turning on  {}/{} LEDs for value {}/{}".format(self.cur_idx+1, self.pixels.n(), self.ts.value, self.ts.stream_spec.max_val))
-        pix_range = range(self.prev_idx, self.pixels.n())
+        pix_range = range(self.pixels.n())
         print_dbg("Only {} need to be updated".format(len(pix_range)))
         for n in pix_range:
             if n < self.cur_idx:
