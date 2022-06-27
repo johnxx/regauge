@@ -221,27 +221,27 @@ class Face(GaugeFace):
         radius = 3.5 
         a = .4*math.pi
         # yellow to blue/purple: 10/10 for general gauge
-        colors = [
-            0xfac76e,
-            0xffbb6f,
-            0xffaf72,
-            0xffa477,
-            0xff997d,
-            0xfd8f84,
-            0xf6878c,
-            0xee8093,
-            0xe37a9a,
-            0xd676a1,
-            0xc673a6,
-            0xb671aa,
-            0xa36fad,
-            0x8f6eae,
-            0x7a6cad,
-            0x646baa,
-            0x4c69a5,
-            0x31669e,
-            0x066395
-        ]
+        # colors = [
+        #     0xfac76e,
+        #     0xffbb6f,
+        #     0xffaf72,
+        #     0xffa477,
+        #     0xff997d,
+        #     0xfd8f84,
+        #     0xf6878c,
+        #     0xee8093,
+        #     0xe37a9a,
+        #     0xd676a1,
+        #     0xc673a6,
+        #     0xb671aa,
+        #     0xa36fad,
+        #     0x8f6eae,
+        #     0x7a6cad,
+        #     0x646baa,
+        #     0x4c69a5,
+        #     0x31669e,
+        #     0x066395
+        # ]
         # blue to yellow with green in the middle 8/10 looks nice
         # colors = [
         #     0x2b7ea9,
@@ -265,6 +265,28 @@ class Face(GaugeFace):
         #     0xffd800
         # ]
 
+        # blue to orange: 
+        colors = [
+            0x36578e,
+            0x455894,
+            0x545999,
+            0x63599c,
+            0x72589f,
+            0x8257a0,
+            0x91569f,
+            0xa0549e,
+            0xae529b,
+            0xbc5096,
+            0xc84e91,
+            0xd44d8a,
+            0xdf4d82,
+            0xe84e79,
+            0xf0506f,
+            0xf65465,
+            0xfb5a5a,
+            0xfe624e,
+            0xff6a42
+        ]
         current_segment = 0
 
         offset = 10
@@ -302,6 +324,7 @@ class Face(GaugeFace):
         self.palette[0] = 0xFFFFFF
 
         self.segments = self._setup_display()
+        self.last_val = 0
         self.last_lit = 0
 
     def pick_seg(self, v):
@@ -313,6 +336,8 @@ class Face(GaugeFace):
         return math.floor(as_pct * len(self.segments))
 
     def update(self):
+        if self.last_val == self.ts.value:
+            return
         self.label.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
         lit = self.pick_seg(self.ts.value)
         if lit == self.last_lit:
@@ -326,3 +351,4 @@ class Face(GaugeFace):
                 s = self.segments[n]
                 s.color_index = 0
         self.last_lit = lit
+        self.last_val = self.ts.value
