@@ -39,7 +39,6 @@ def seg_intersect(a1, a2, b1, b2):
     return (num / denom) * db + b1
 
 def poly_xings(poly, seg):
-    print(seg)
     seg = array([seg[0], seg[1]])
     xings = []
     n = -1
@@ -55,15 +54,16 @@ def poly_xings(poly, seg):
 def poly_bbox(points):
     min_x, min_y, max_x, max_y = [None] * 4
     for x, y in points:
-        if min_x == None or x > min_x:
+        if min_x == None or x < min_x:
             min_x = x
-        if max_x == None or x < max_x:
+        if max_x == None or x > max_x:
             max_x = x
-        if min_y == None or y > min_y:
+        if min_y == None or y < min_y:
             min_y = y
-        if max_y == None or y < max_y:
+        if max_y == None or y > max_y:
             max_y = y
-    return (min_x, min_y), (max_x, max_y)
+    # return (min_x, min_y), (max_x, max_y)
+    return (max_x, max_y), (min_x, min_y)
 
 def arc_points(r, a1, a2, center=(0, 0), segments=None):
     if not segments:
@@ -139,9 +139,10 @@ def min_y(points):
             point_low_y = (x, y)
     return point_low_y
 
-def seg_inside(poly, margin, a, offset=0):
+def seg_inside(poly, margin, a, offset=0, mid_y=None):
     bl, tr = poly_bbox(poly)
-    mid_y = (tr[1]+bl[1])/2
+    if not mid_y:
+        mid_y = (tr[1]+bl[1])/2
     left_mid = (poly_line_min_x(poly, mid_y) + offset + margin, int(mid_y))
     slope = math.tan(a)
 
@@ -170,7 +171,6 @@ def barify(s, r, a=0):
     bar += arc_points(r, -0*math.pi-1/a, -1*math.pi-1/a, center=tl_o(s[1]))
     return bar
 
-
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -179,94 +179,16 @@ class Face(GaugeFace):
     default_options = {
         # 'label_font': 'UpheavalTT-BRK--20.bdf',
         # 'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
-         'label_font': 'PixelLCD-7-16.bdf',
+        'position': 'top',
+        'gradient': "yellow_blurple",
+        'label_font': 'PixelLCD-7-16.bdf',
         'font_color':0xCCCCCC, 
         'fmt_string': "{:>3.0f}{}", 
         'bar_color':0xFF8888, 
     }
-
-    def _setup_display(self):
-        def setup_bezel():
-            y1 = 0 
-            y2 = 80 
-            y3 = 20 
-            
-            a1 = height_to_angle(y1)
-            a2 = height_to_angle(y2)
-            a3 = height_to_angle(y3)
-
-            r = 105
-
-            points = arc_points(r, math.pi-a1, math.pi-a2)
-            points += arc_points(r, a2, a3)
-            points[-1] = (points[-1][0], -y3+y_offset)
-            points.append(o_tl((18,20)))
-            points.append(o_tl((10,0)))
-
-            return points
-
-        bezel = setup_bezel()
-        p = Polygon(points=bezel, outline=0xCCCCCC)
-        self.display_group.append(p)
-
-        def setup_label(opts, x=0, y=0):
-            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
-            return Label(font, text='', color=opts['font_color'], scale=1,
-                                    anchor_point=(1, 0), anchored_position=(x, y))
-        self.label = setup_label(self.options, 225, 105)
-        self.display_group.append(self.label)
-
-        total_segments = 19
-        margin = 5 
-        radius = 3.5 
-        a = .4*math.pi
-        # yellow to blue/purple: 10/10 for general gauge
-        # colors = [
-        #     0xfac76e,
-        #     0xffbb6f,
-        #     0xffaf72,
-        #     0xffa477,
-        #     0xff997d,
-        #     0xfd8f84,
-        #     0xf6878c,
-        #     0xee8093,
-        #     0xe37a9a,
-        #     0xd676a1,
-        #     0xc673a6,
-        #     0xb671aa,
-        #     0xa36fad,
-        #     0x8f6eae,
-        #     0x7a6cad,
-        #     0x646baa,
-        #     0x4c69a5,
-        #     0x31669e,
-        #     0x066395
-        # ]
-        # blue to yellow with green in the middle 8/10 looks nice
-        # colors = [
-        #     0x2b7ea9,
-        #     0x0086b0,
-        #     0x008eb5,
-        #     0x0096b8,
-        #     0x009eb8,
-        #     0x00a6b6,
-        #     0x00adb1,
-        #     0x00b4aa,
-        #     0x00baa1,
-        #     0x00c096,
-        #     0x00c689,
-        #     0x23cb7b,
-        #     0x50d06b,
-        #     0x70d45b,
-        #     0x8ed74b,
-        #     0xaad939,
-        #     0xc6da27,
-        #     0xe2da13,
-        #     0xffd800
-        # ]
-
-        # blue to orange: 
-        colors = [
+    gradients = {
+        # blue to orange: 9.5/10
+        "blue_orange": [
             0x36578e,
             0x455894,
             0x545999,
@@ -286,18 +208,128 @@ class Face(GaugeFace):
             0xfb5a5a,
             0xfe624e,
             0xff6a42
+        ],
+        # yellow to blue/purple: 10/10 for general gauge
+        "yellow_blurple": [
+            0xfac76e,
+            0xffbb6f,
+            0xffaf72,
+            0xffa477,
+            0xff997d,
+            0xfd8f84,
+            0xf6878c,
+            0xee8093,
+            0xe37a9a,
+            0xd676a1,
+            0xc673a6,
+            0xb671aa,
+            0xa36fad,
+            0x8f6eae,
+            0x7a6cad,
+            0x646baa,
+            0x4c69a5,
+            0x31669e,
+            0x066395
+        ],
+        # blue to yellow with green in the middle 8/10 looks nice
+        "blue_yellow": [
+            0x2b7ea9,
+            0x0086b0,
+            0x008eb5,
+            0x0096b8,
+            0x009eb8,
+            0x00a6b6,
+            0x00adb1,
+            0x00b4aa,
+            0x00baa1,
+            0x00c096,
+            0x00c689,
+            0x23cb7b,
+            0x50d06b,
+            0x70d45b,
+            0x8ed74b,
+            0xaad939,
+            0xc6da27,
+            0xe2da13,
+            0xffd800
         ]
+    }
+
+    def _setup_display(self):
+        def setup_bezel_mirrored(opts):
+            y1 = -90
+            y2 = -20
+            y3 = -2
+            
+            a1 = height_to_angle(y1)
+            a2 = height_to_angle(y2)
+            a3 = height_to_angle(y3)
+
+            r = 105
+
+            points = arc_points(r, math.pi-a1, math.pi-a2)
+            points[-1] = (points[-1][0], -y2+y_offset)
+            points.append(o_tl((-18, -20)))
+            points.append(o_tl((-10, -2)))
+            points += arc_points(r, a3, a1)
+            # points[-1] = (points[-1][0], -y3+y_offset)
+
+            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
+            label = Label(font, text='', color=opts['font_color'], scale=1,
+                                    anchor_point=(1, 0), anchored_position=(100, 123))
+
+            return points, label
+
+        def setup_bezel(opts):
+            y1 = 2
+            y2 = 90
+            y3 = 20
+            
+            a1 = height_to_angle(y1)
+            a2 = height_to_angle(y2)
+            a3 = height_to_angle(y3)
+
+            r = 105
+
+            points = arc_points(r, math.pi-a1, math.pi-a2)
+            points += arc_points(r, a2, a3)
+            points[-1] = (points[-1][0], -y3+y_offset)
+            points.append(o_tl((18, 20)))
+            points.append(o_tl((10, 2)))
+
+            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
+            label = Label(font, text='', color=opts['font_color'], scale=1,
+                                    anchor_point=(1, 0), anchored_position=(225, 103))
+
+            return points, label
+
+        if self.options['position'] == 'top':
+            bezel, self.label = setup_bezel(self.options)
+        else:
+            bezel, self.label = setup_bezel_mirrored(self.options)
+        p = Polygon(points=bezel, outline=0xCCCCCC)
+        self.display_group.append(p)
+        self.display_group.append(self.label)
+
+        total_segments = 19
+        margin = 5 
+        radius = 3.5 
+        a = .4*math.pi
+
         current_segment = 0
 
         offset = 10
         segments = []
         while current_segment < total_segments:
-            si = seg_inside(bezel, margin, a, offset=offset)
+            if self.options['position'] == 'top':
+                si = seg_inside(bezel, margin, a, offset=offset)
+            else:
+                si = seg_inside(bezel, margin, a, offset=offset, mid_y=140)
             bar = barify(si, radius, a=a)
             
             pal = displayio.Palette(2)
             pal[0] = 0x222222
-            pal[1] = colors[current_segment]
+            pal[1] = self.gradients[self.options['gradient']][current_segment]
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
             # bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
 
@@ -315,7 +347,6 @@ class Face(GaugeFace):
             print("options: {}".format(json.dumps(options)))
             print("resources: {}".format(json.dumps(resources)))
         self.ts = ts
-        print(json.dumps(self.ts.stream_spec.__dict__))
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.display_group = resources['display_group']
@@ -338,7 +369,7 @@ class Face(GaugeFace):
     def update(self):
         if self.last_val == self.ts.value:
             return
-        self.label.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
+        self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
         lit = self.pick_seg(self.ts.value)
         if lit == self.last_lit:
             return

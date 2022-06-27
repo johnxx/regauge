@@ -15,7 +15,7 @@ class DataSource():
                 "max": 115,
                 "pattern": "zigzag",
                 "increment": 1,
-                "every": 50
+                "every": 5
             },
             "oilpres_psi": {
                 "min": 1,
@@ -35,7 +35,7 @@ class DataSource():
                 "min": 0.7/0.0078125,
                 "max": 1.3/0.0078125,
                 "pattern": "zigzag",
-                "increment": 1,
+                "increment": 0.1,
                 "every": 2
             }
         }),

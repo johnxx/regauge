@@ -20,7 +20,8 @@
       "listen_port": 80
     },
     "data_can": {
-      "poll_freq": 30
+      "enabled": false,
+      "poll_freq": 20
     }
   },
   "hardware": {
@@ -60,21 +61,111 @@
   },
   "layout": [
     {
-      "name": "oilpres",
+      "name": "coolant",
+      "update_freq": 2,
+      "time_series": {
+        "upto_vals": 1
+      },
+      "stream_spec": {
+        "field_spec": "clt_cel",
+        "min_val": 40,
+        "max_val": 130
+      },
+      "gauge_face": {
+        "ofType": "2",
+        "normal_color": 204,
+        "warning_color": 52411,
+        "critical_color": 13391104,
+        "warning_level": 75,
+        "critical_level": 105,
+        "label": "bottom"
+      },
+      "resources": [
+        {
+          "ofType": "1",
+          "start": 4,
+          "end": 11
+        },
+        {
+          "ofType": "0",
+          "x_offset": 0,
+          "y_offset": 0
+        }
+      ]
+    },
+    {
+      "name": "o2",
+      "update_freq": 10,
+      "time_series": {
+        "upto_vals": 1
+      },
+      "stream_spec": {
+        "field_spec": "o2_lambda",
+        "min_val": 0.75,
+        "max_val": 1.3
+      },
+      "gauge_face": {
+        "ofType": "2",
+        "normal_color": 6619391,
+        "warning_color": 65280,
+        "critical_color": 16711782,
+        "warning_level": 0.95,
+        "critical_level": 1.1,
+        "label": "top",
+        "fmt_string": "{:>1.2f}{}"
+      },
+      "resources": [
+        {
+          "ofType": "1",
+          "start": 3,
+          "end": -4,
+          "step": -1
+        },
+        {
+          "ofType": "0",
+          "x_offset": 0,
+          "y_offset": 0
+        }
+      ]
+    },
+    {
+      "name": "rpm",
       "update_freq": 15,
       "time_series": {
         "upto_vals": 1
       },
       "stream_spec": {
         "field_spec": "eng_rpm",
-        "units": "psi",
         "min_val": 0,
         "max_val": 8000
       },
       "gauge_face": {
-        "ofType": "3"
+        "ofType": "3",
+        "position", "top",
+        "gradient": "blue_orange"
       },
-      "resource": {
+      "resources": [{
+        "ofType": "0",
+        "x_offset": 0,
+        "y_offset": 0
+      }]
+    },
+    {
+      "name": "oilpres",
+      "update_freq": 15,
+      "time_series": {
+        "upto_vals": 1
+      },
+      "stream_spec": {
+        "field_spec": "oilpres_psi",
+        "min_val": 0,
+        "max_val": 110
+      },
+      "gauge_face": {
+        "ofType": "3",
+        "position", "bottom"
+      },
+      "resources": [{
         "ofType": "0",
         "x_offset": 0,
         "y_offset": 0

@@ -1,3 +1,5 @@
+from adafruit_bitmap_font import bitmap_font
+from adafruit_display_text.label import Label
 from gauge_face import GaugeFace
 import math
 
@@ -14,7 +16,11 @@ class Face(GaugeFace):
         'normal_color': 0x00ff00,
         'warning_color': 0xffff00, 
         'critical_color': 0xff0000,
-        'off_color': 0x000000
+        'off_color': 0x000000,
+        'label': None,
+        'label_font': 'PixelLCD-7-16.bdf',
+        'font_color':0xCCCCCC, 
+        'fmt_string': "{:>3.0f}{}", 
     }
 
     def __init__(self, ts, options, resources) -> None:
@@ -25,10 +31,23 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.pixels = resources['leds']
+        
+        if self.options['label']:
+            font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
+            if self.options['label'] == 'top':
+                print("top!")
+                self.label = Label(font, text='', color=self.options['font_color'], scale=1,
+                                        anchor_point=(1, 0), anchored_position=(145, 20))
+            elif self.options['label'] == 'bottom':
+                print("bottom!")
+                self.label = Label(font, text='', color=self.options['font_color'], scale=1,
+                                        anchor_point=(1, 0), anchored_position=(145, 220))
+            resources['display_group'].append(self.label)
 
         self.pixels.fill(self.options['off_color'])
 
         self.prev_idx = 0
+        self.prev_val = 0
 
     def _range_per_segment(self):
         return (self.ts.stream_spec.max_val - self.ts.stream_spec.min_val) / self.pixels.n()
@@ -64,9 +83,18 @@ class Face(GaugeFace):
         self.update()
 
     def update(self):
+        if self.prev_val == self.ts.value:
+            return
+        self.prev_val = self.ts.value
+        if self.options['label']:
+            print_dbg("Updating label: {}".format(self.ts.value))
+            self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
         self.cur_idx = self._value_to_segment()
+        if self.prev_idx == self.cur_idx:
+            return
         print_dbg("Turning on  {}/{} LEDs for value {}/{}".format(self.cur_idx+1, self.pixels.n(), self.ts.value, self.ts.stream_spec.max_val))
-        pix_range = range(self.pixels.n())
+        pix_range = range(self.prev_idx, self.pixels.n())
+        print_dbg("Only {} need to be updated".format(len(pix_range)))
         for n in pix_range:
             if n < self.cur_idx:
                 self.pixels[n] = self._pick_color(n)
@@ -74,16 +102,4 @@ class Face(GaugeFace):
                 self.pixels[n] = self._pick_color_old()
             else:
                 self.pixels[n] = self.options['off_color']
-
-    def update_old(self):
-        self.cur_idx = self._value_to_segment()
-        # print("Rendering {}:{} as {}".format(self.stream_spec.field_spec, self.value, self.cur_idx))
-        if self.prev_idx >= 0 and self.cur_idx < self.prev_idx:
-            for s in range(self.cur_idx + 1, self.prev_idx + 1):
-                self.pixels[s] = self.options['off_color']
-        if self.prev_idx >= 0 and self.cur_idx > self.prev_idx:
-            for s in range(self.prev_idx, self.cur_idx):
-                self.pixels[s] = self._pick_color()
-        self.pixels[self.cur_idx] = self._pick_color()
-        # print("Displaying value: {} as {}".format(self._value, self.cur_idx))
         self.prev_idx = self.cur_idx

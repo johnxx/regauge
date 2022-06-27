@@ -32,36 +32,33 @@ def initialize_gauges(layout, resources):
         block['type'] = 'simple'
         block['sub_type'] = 'SimpleGauge'
 
-        resource_config = block['resource']
         gauge_resources = {}
-        # print(json.dumps(resource_config))
-        if resource_config['ofType'] == NEOPIXEL_SLICE:
-            if 'step' in resource_config and resource_config['step']:
-                keys = range(
-                    resource_config['start'],
-                    resource_config['end'],
-                    resource_config['step']
-                )
+        for resource_config in block['resources']:
+            # print(json.dumps(resource_config))
+            if resource_config['ofType'] == NEOPIXEL_SLICE:
+                if 'step' in resource_config and resource_config['step']:
+                    keys = range(
+                        resource_config['start'],
+                        resource_config['end'],
+                        resource_config['step']
+                    )
+                else:
+                    keys = range(
+                        resource_config['start'],
+                        resource_config['end']
+                    )
+                if 'reverse' in resource_config and resource_config['reverse']:
+                    keys = list(reversed(keys))
+                    
+                gauge_resource = neopixel_slice.NeoPixelSlice(resources['leds'], keys)
+                gauge_resources['leds'] = gauge_resource
+            elif resource_config['ofType'] == DISPLAY_GROUP:
+                gauge_resource = displayio.Group(x=int(resource_config['x_offset']), y=int(resource_config['y_offset']))
+                resources['lcd']['main_context'].append(gauge_resource)
+                gauge_resources['display_group'] = gauge_resource
             else:
-                keys = range(
-                    resource_config['start'],
-                    resource_config['end']
-                )
-            if 'reverse' in resource_config and resource_config['reverse']:
-                keys = list(reversed(keys))
-                
-            gauge_resource = neopixel_slice.NeoPixelSlice(
-                resources[resource_config['hw_resource']], 
-                keys
-            )
-            gauge_resources['leds]'] = gauge_resource
-        elif resource_config['ofType'] == DISPLAY_GROUP:
-            gauge_resource = displayio.Group(x=int(resource_config['x_offset']), y=int(resource_config['y_offset']))
-            resources['lcd']['main_context'].append(gauge_resource)
-            gauge_resources['display_group'] = gauge_resource
-        else:
-            print("Couldn't figure out resource type for gauge")
-            break
+                print("Couldn't figure out resource type for gauge")
+                break
 
 
         gauge_module = __import__('gauges.' + block['type'], None, None, [block['sub_type']])
@@ -233,6 +230,7 @@ def setup_hardware(hardware):
 
 
 def allocate_resources(layout, resources):
+    return "Unused!"
     for name, config in layout.items():
         if config['type'] == 'neopixel_slice':
             if 'step' in config and config['step']:
