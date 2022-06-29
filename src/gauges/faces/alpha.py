@@ -304,12 +304,11 @@ class Face(GaugeFace):
             return points, label
 
         if self.options['position'] == 'top':
-            bezel, self.label = setup_bezel(self.options)
+            bezel, label = setup_bezel(self.options)
         else:
-            bezel, self.label = setup_bezel_mirrored(self.options)
-        p = Polygon(points=bezel, outline=0xCCCCCC)
-        self.display_group.append(p)
-        self.display_group.append(self.label)
+            bezel, label = setup_bezel_mirrored(self.options)
+        surround_bezel = Polygon(points=bezel, outline=0xCCCCCC)
+        self.display_group.append(surround_bezel)
 
         total_segments = 19
         margin = 5 
@@ -331,15 +330,16 @@ class Face(GaugeFace):
             pal[0] = 0x222222
             pal[1] = self.gradients[self.options['gradient']][current_segment]
             bar_poly = vectorio.Polygon(points=bar, pixel_shader=pal)
+            bar_poly.color_index = 1
             # bar_poly_outline = Polygon(points=bar, outline=0x55AAFF)
 
-            self.display_group.append(bar_poly)
+            # self.display_group.append(bar_poly)
             segments.append(bar_poly)
             # self.display_group.append(bar_poly_outline)
             
             offset += margin*2
             current_segment += 1
-        return segments
+        return segments, label
 
     def __init__(self, ts, options, resources) -> None:
         if dump_cfg:
@@ -354,7 +354,11 @@ class Face(GaugeFace):
         self.palette = displayio.Palette(1) 
         self.palette[0] = 0xFFFFFF
 
-        self.segments = self._setup_display()
+        self.segments, self.label = self._setup_display()
+        self.display_segments = displayio.Group()
+        self.display_group.append(self.display_segments)
+
+        self.display_group.append(self.label)
         self.last_val = 0
         self.last_lit = 0
 
@@ -366,7 +370,7 @@ class Face(GaugeFace):
             as_pct = 0
         return math.floor(as_pct * len(self.segments))
 
-    def update(self):
+    def update_slow(self):
         if self.last_val == self.ts.value:
             return
         self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
@@ -381,5 +385,25 @@ class Face(GaugeFace):
             for n in range(lit, self.last_lit):
                 s = self.segments[n]
                 s.color_index = 0
+        self.last_lit = lit
+        self.last_val = self.ts.value
+
+    def update(self):
+        num_segs = len(self.segments) - 1
+        if self.last_val == self.ts.value:
+            return
+        self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
+        lit = self.pick_seg(self.ts.value)
+        if lit == self.last_lit:
+            return
+        if lit > self.last_lit:
+            for n in range(self.last_lit, lit):
+                print_dbg("Turning on segment {}/{}".format(n, num_segs))
+                self.display_segments.append(self.segments[n])
+        elif lit < self.last_lit:
+            for n in range(lit, self.last_lit):
+                print_dbg("Turning off segment {}/{}".format(n, num_segs))
+                del self.display_segments[n]
+        print_dbg("Tried to light {}/{} segments".format(n, num_segs))
         self.last_lit = lit
         self.last_val = self.ts.value

@@ -35,11 +35,9 @@ class Face(GaugeFace):
         if self.options['label']:
             font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
             if self.options['label'] == 'top':
-                print("top!")
                 self.label = Label(font, text='', color=self.options['font_color'], scale=1,
                                         anchor_point=(1, 0), anchored_position=(145, 20))
             elif self.options['label'] == 'bottom':
-                print("bottom!")
                 self.label = Label(font, text='', color=self.options['font_color'], scale=1,
                                         anchor_point=(1, 0), anchored_position=(145, 220))
             resources['display_group'].append(self.label)
