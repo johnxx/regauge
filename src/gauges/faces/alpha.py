@@ -394,6 +394,12 @@ class Face(GaugeFace):
             return
         self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
         lit = self.pick_seg(self.ts.value)
+
+        if lit >= num_segs:
+            lit = num_segs - 1
+        elif lit < 1:
+            lit = 1
+
         if lit == self.last_lit:
             return
         if lit > self.last_lit:
@@ -401,9 +407,10 @@ class Face(GaugeFace):
                 print_dbg("Turning on segment {}/{}".format(n, num_segs))
                 self.display_segments.append(self.segments[n])
         elif lit < self.last_lit:
-            for n in range(lit, self.last_lit):
+            for n in range(self.last_lit - 1, lit, -1):
                 print_dbg("Turning off segment {}/{}".format(n, num_segs))
                 del self.display_segments[n]
-        print_dbg("Tried to light {}/{} segments".format(n, num_segs))
+                print_dbg("Turned off segment {}/{}".format(n, num_segs))
+        print_dbg("Tried to light {}/{} segments".format(lit, num_segs))
         self.last_lit = lit
         self.last_val = self.ts.value
