@@ -13,7 +13,7 @@ import time
 import vectorio
 
 instrumentation = False
-debug = False
+debug = True
 dump_cfg = False
 
 y_offset = 120
@@ -389,7 +389,7 @@ class Face(GaugeFace):
         self.last_val = self.ts.value
 
     def update(self):
-        num_segs = len(self.segments) - 1
+        num_segs = len(self.segments)
         if self.last_val == self.ts.value:
             return
         self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
@@ -407,7 +407,8 @@ class Face(GaugeFace):
                 print_dbg("Turning on segment {}/{}".format(n, num_segs))
                 self.display_segments.append(self.segments[n])
         elif lit < self.last_lit:
-            for n in range(self.last_lit - 1, lit, -1):
+            print(list(range(self.last_lit - 1, lit - 1, -1)))
+            for n in range(self.last_lit - 1, lit - 1, -1):
                 print_dbg("Turning off segment {}/{}".format(n, num_segs))
                 del self.display_segments[n]
                 print_dbg("Turned off segment {}/{}".format(n, num_segs))
