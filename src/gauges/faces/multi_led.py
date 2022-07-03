@@ -31,6 +31,7 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.pixels = resources['leds']
+        self.lcd = resources['lcd']
         
         if self.options['label']:
             font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
@@ -87,6 +88,7 @@ class Face(GaugeFace):
         if self.options['label']:
             print_dbg("Updating label: {}".format(self.ts.value))
             self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
+            self.lcd['dirty'] = True
         self.cur_idx = self._value_to_segment()
         if self.prev_idx == self.cur_idx:
             return

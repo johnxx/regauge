@@ -32,7 +32,7 @@ class DataSource():
         self.data_bus = resources['data_bus']
         self.poll_freq = poll_freq
         print_dbg("Listening for CANbus messages {} times per second".format(poll_freq))
-        self.listener = self.bus.listen(matches=[self.match], timeout=1)
+        self.listener = self.bus.listen(matches=[self.match], timeout=0.01)
 
     def unpack_frame(self, frame):
         # Fish the frame ID out of the 4 bytes after the header

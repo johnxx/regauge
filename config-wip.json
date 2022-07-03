@@ -8,7 +8,7 @@
       "bind_addr": "0.0.0.0"
     },
     "data_mock": {
-      "enabled": true,
+      "enabled": false,
       "poll_freq": 30,
       "send_frame_ids": [
         "all"
@@ -20,8 +20,8 @@
       "listen_port": 80
     },
     "data_can": {
-      "enabled": false,
-      "poll_freq": 20
+      "enabled": true,
+      "poll_freq": 60
     }
   },
   "hardware": {
@@ -41,18 +41,18 @@
     "lcd": {
       "enabled": true,
       "pins": {
-        "rst": "D10",
-        "cs": "D20",
-        "dc": "D21",
-        "bl": "D11"
+        "rst": "A2",
+        "cs": "A0",
+        "dc": "A1",
+        "bl": "A3"
       },
       "height": 240,
       "width": 240
     },
     "leds": {
-      "order": "GRB",
+      "order": "GRBW",
       "pins": {
-        "data": "D16"
+        "data": "SDA"
       },
       "enabled": true,
       "brightness": 0.1,
@@ -73,7 +73,7 @@
       },
       "gauge_face": {
         "ofType": "2",
-        "normal_color": 204,
+        "normal_color": 65535,
         "warning_color": 52411,
         "critical_color": 13391104,
         "warning_level": 75,
@@ -106,8 +106,8 @@
       },
       "gauge_face": {
         "ofType": "2",
-        "normal_color": 6619391,
-        "warning_color": 65280,
+        "normal_color": 13311,
+        "warning_color": 3407667,
         "critical_color": 16711782,
         "warning_level": 0.95,
         "critical_level": 1.1,

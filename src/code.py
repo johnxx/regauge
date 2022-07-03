@@ -19,7 +19,7 @@ TEXT = "1"
 MULTI_LED = "2"
 ALPHA = "3"
 
-instrumentation = False
+instrumentation = True
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
@@ -56,6 +56,7 @@ def initialize_gauges(layout, resources):
                 gauge_resource = displayio.Group(x=int(resource_config['x_offset']), y=int(resource_config['y_offset']))
                 resources['lcd']['main_context'].append(gauge_resource)
                 gauge_resources['display_group'] = gauge_resource
+                gauge_resources['lcd'] = resources['lcd']
             else:
                 print("Couldn't figure out resource type for gauge")
                 break
@@ -185,6 +186,14 @@ def setup_hardware(hardware):
             auto_refresh=False,
             backlight_pin=getattr(board, lcd_cfg['pins']['bl'])
         )
+        main_context = displayio.Group()
+        resources['lcd'] = {
+            'hardware': lcd,
+            'main_context': main_context,
+            'width': lcd_cfg['width'],
+            'height': lcd_cfg['height'],
+            'dirty': False
+        }
         async def lcd_update():
             if instrumentation:
                 start_time = time.monotonic()
@@ -192,21 +201,19 @@ def setup_hardware(hardware):
             if instrumentation:
                 end_time = time.monotonic()
                 total = end_time - start_time
-                print("{} took {}s".format('lcd refresh', total))
+                if resources['lcd']['dirty'] == False:
+                    print("{} wasted {}s".format('lcd refresh', total))
+                else:
+                    pass
+                    # print("{} took {}s".format('lcd refresh', total))
+            resources['lcd']['dirty'] = False
 
 
         if not lcd.auto_refresh:
-            global_framerate = 30
+            global_framerate = 15
             display_update = asynccp.schedule(frequency=global_framerate, coroutine_function=lcd_update)
-        main_context = displayio.Group()
         lcd.show(main_context)
 
-        resources['lcd'] = {
-            'hardware': lcd,
-            'main_context': main_context,
-            'width': lcd_cfg['width'],
-            'height': lcd_cfg['height']
-        }
         
     if hardware['leds']['enabled']:
         led_cfg = hardware['leds']
@@ -217,14 +224,12 @@ def setup_hardware(hardware):
         else:
             order = neopixel.GRB
         
-        leds = neopixel.NeoPixel(
+        resources['leds'] = neopixel.NeoPixel(
             getattr(board, led_cfg['pins']['data']),
             led_cfg['number'],
             brightness=led_cfg['brightness'],
             pixel_order=order
         )
-
-        resources['leds'] = leds
 
     return resources
 

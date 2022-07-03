@@ -13,7 +13,7 @@ import time
 import vectorio
 
 instrumentation = False
-debug = True
+debug = False
 dump_cfg = False
 
 y_offset = 120
@@ -350,6 +350,7 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.display_group = resources['display_group']
+        self.lcd = resources['lcd']
 
         self.palette = displayio.Palette(1) 
         self.palette[0] = 0xFFFFFF
@@ -370,29 +371,13 @@ class Face(GaugeFace):
             as_pct = 0
         return math.floor(as_pct * len(self.segments))
 
-    def update_slow(self):
-        if self.last_val == self.ts.value:
-            return
-        self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
-        lit = self.pick_seg(self.ts.value)
-        if lit == self.last_lit:
-            return
-        if lit > self.last_lit:
-            for n in range(self.last_lit, lit):
-                s = self.segments[n]
-                s.color_index = 1
-        elif lit < self.last_lit:
-            for n in range(lit, self.last_lit):
-                s = self.segments[n]
-                s.color_index = 0
-        self.last_lit = lit
-        self.last_val = self.ts.value
-
     def update(self):
         num_segs = len(self.segments)
         if self.last_val == self.ts.value:
             return
         self.label.text = self.options['fmt_string'].format(self.ts.value, self.ts.stream_spec.units['suffix'])
+        self.lcd['dirty'] = True
+
         lit = self.pick_seg(self.ts.value)
 
         if lit >= num_segs:
@@ -407,7 +392,6 @@ class Face(GaugeFace):
                 print_dbg("Turning on segment {}/{}".format(n, num_segs))
                 self.display_segments.append(self.segments[n])
         elif lit < self.last_lit:
-            print(list(range(self.last_lit - 1, lit - 1, -1)))
             for n in range(self.last_lit - 1, lit - 1, -1):
                 print_dbg("Turning off segment {}/{}".format(n, num_segs))
                 del self.display_segments[n]
