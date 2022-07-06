@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from asynccp.time import Duration
 from functools import partial
+import uprofile
 import json
 
+uprofile.enabled = True
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
@@ -26,6 +28,7 @@ class Passy():
         self.subscriptions[sub_id].add(topic_pref)
         return (sub_id, topic_pref)
 
+    @uprofile.profile('passy', 'pub')
     def pub(self, topic, msg, auto_send=True):
         print_dbg("Got a message about {}".format(topic))
         # print_dbg("{}: {}".format(topic, json.dumps(msg)))
@@ -51,6 +54,7 @@ class Passy():
         callback = partial(self.send_async, sub_id)
         self.task_manager.schedule(frequency=almost_immediately, coroutine_function=callback)
 
+    @uprofile.profile('passy', 'send')
     def send(self, sub_id):
         if sub_id in self.outbox and self.outbox[sub_id]:
             if self.is_async:

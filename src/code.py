@@ -5,6 +5,7 @@ import displayio
 import json
 import neopixel_slice
 import time
+import uprofile
 #from data import data
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_shapes import line
@@ -19,7 +20,8 @@ TEXT = "1"
 MULTI_LED = "2"
 ALPHA = "3"
 
-instrumentation = True
+uprofile.enabled = True
+instrumentation = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
@@ -194,6 +196,7 @@ def setup_hardware(hardware):
             'height': lcd_cfg['height'],
             'dirty': False
         }
+        @uprofile.profile('lcd', 'update')
         async def lcd_update():
             if instrumentation:
                 start_time = time.monotonic()
