@@ -4,7 +4,7 @@ from functools import partial
 import uprofile
 import json
 
-uprofile.enabled = True
+uprofile.enabled = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:

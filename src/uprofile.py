@@ -10,6 +10,7 @@ time_ref = {
 }
 
 def print_stats(stats):
+    # print(json.dumps(stats))
     for group_name, group_stats in stats.items():
         if group_stats['total_calls'] == 0:
             continue
@@ -29,6 +30,36 @@ def print_stats(stats):
         stats[group_name]['total_calls'] = 0
         stats[group_name]['children'] = {}
 
+def start_segment(group, name):
+    if group not in stats:
+        stats[group] = {
+            "total_time": 0,
+            "total_calls": 0,
+            "children": {}
+        }
+    cur_sec = math.floor(time.monotonic())
+    if not time_ref['now']:
+        time_ref['now'] = cur_sec
+    if time_ref['now'] != cur_sec:
+        print(chr(27) + "[H" + chr(27) + "[J")
+        print("@{}".format(time_ref['now']))
+        print("=" * 40)
+        print_stats(stats)
+        time_ref['now'] = cur_sec
+
+    if name not in stats[group]['children']:
+        stats[group]['children'][name] = {
+            'total_time': 0,
+            'total_calls': 0
+        }
+    stats[group]['children'][name]['started'] = time.monotonic()
+
+def end_segment(group, name):
+    last = time.monotonic() - stats[group]['children'][name]['started']
+    stats[group]['children'][name]['total_time'] += last
+    stats[group]['children'][name]['total_calls'] += 1
+    stats[group]['total_time'] += last
+    stats[group]['total_calls'] += 1
 
 def profile(group, name):
     # Once at the time the decorator is applied
@@ -39,7 +70,6 @@ def profile(group, name):
                 "total_calls": 0,
                 "children": {}
             }
-        sample = {}
         def profile_real(func):
             def wrap(*args, **kwargs):
                 # Every time the decorated function is called
@@ -59,8 +89,7 @@ def profile(group, name):
                 if name not in stats[group]['children']:
                     stats[group]['children'][name] = {
                         'total_time': total,
-                        'total_calls': 1,
-                        'average_time': total,
+                        'total_calls': 1
                     }
                 else:
                     stats[group]['children'][name]['total_time'] += total

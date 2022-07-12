@@ -20,7 +20,7 @@ TEXT = "1"
 MULTI_LED = "2"
 ALPHA = "3"
 
-uprofile.enabled = True
+uprofile.enabled = False
 instrumentation = False
 debug = False
 def print_dbg(some_string, **kwargs):

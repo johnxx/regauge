@@ -10,8 +10,10 @@ import displayio
 import json
 import math
 import time
+import uprofile
 import vectorio
 
+uprofile.enabled = True
 instrumentation = False
 debug = False
 dump_cfg = False
@@ -371,6 +373,7 @@ class Face(GaugeFace):
             as_pct = 0
         return math.floor(as_pct * len(self.segments))
 
+    @uprofile.profile('alpha', 'update')
     def update(self):
         num_segs = len(self.segments)
         if self.last_val == self.ts.value:

@@ -6,7 +6,9 @@ import displayio
 import json
 import math
 import time
+import uprofile
 
+uprofile.enabled = True
 instrumentation = False
 debug = False
 dump_cfg = False
@@ -71,8 +73,8 @@ class Face(GaugeFace):
         self.width = 240
         self.height = 120
         
-        self.margin_top = 10
-        self.margin_bottom = 30
+        self.margin_top = 12
+        self.margin_bottom = 40
 
         self.last_x = 0
         self.last_y = 0
@@ -106,6 +108,7 @@ class Face(GaugeFace):
     # def pick_y(self, v):
     #     return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
 
+    @uprofile.profile('line_graph', 'update')
     def update(self):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
