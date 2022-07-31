@@ -108,7 +108,6 @@ class Face(GaugeFace):
     # def pick_y(self, v):
     #     return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
 
-    @uprofile.profile('line_graph', 'update')
     def update(self):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
@@ -117,6 +116,7 @@ class Face(GaugeFace):
         print_dbg("Current number of segments: {}".format(num_segs))
         added = 0
         for i, v in enumerate(self.ts.since(self.latest_tstamp)):
+            uprofile.start_segment('line_graph', 'draw_dots_n_lines')
             if v[0] > self.latest_tstamp:
                 self.latest_tstamp = v[0]
             x = self.pick_x(i)
@@ -132,6 +132,8 @@ class Face(GaugeFace):
             self.last_y = y
 
             added += 1
+            uprofile.end_segment('line_graph', 'draw_dots_n_lines')
+        uprofile.start_segment('line_graph', 'the_rest')
         if len(self.lines) > self.num_seg_x:
             # print("last x was: {}".format(self.last_x))
             self.last_x -= self.seg_x*added
@@ -162,15 +164,17 @@ class Face(GaugeFace):
         self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
         new_max = (self.text_top.anchored_position[0], max_y)
         self.text_top.anchored_position = new_max
+
+        uprofile.end_segment('line_graph', 'the_rest')
         
-        if instrumentation:
-            this_second = math.floor(time.monotonic())
-            if self.current_second != this_second:
-                print("framerate: {}".format(self.frames_this_second))
-                self.frames_this_second = 1
-                self.current_second = this_second
-            else:
-                self.frames_this_second += 1
-        
-        print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
-        print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))
+        # if instrumentation:
+        #     this_second = math.floor(time.monotonic())
+        #     if self.current_second != this_second:
+        #         print("framerate: {}".format(self.frames_this_second))
+        #         self.frames_this_second = 1
+        #         self.current_second = this_second
+        #     else:
+        #         self.frames_this_second += 1
+        # 
+        # print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
+        # print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))
