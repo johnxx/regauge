@@ -31,6 +31,8 @@ def print_stats(stats):
         stats[group_name]['children'] = {}
 
 def start_segment(group, name):
+    if not enabled:
+        return
     if group not in stats:
         stats[group] = {
             "total_time": 0,
@@ -55,6 +57,8 @@ def start_segment(group, name):
     stats[group]['children'][name]['started'] = time.monotonic()
 
 def end_segment(group, name):
+    if not enabled:
+        return
     last = time.monotonic() - stats[group]['children'][name]['started']
     stats[group]['children'][name]['total_time'] += last
     stats[group]['children'][name]['total_calls'] += 1

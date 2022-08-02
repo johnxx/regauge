@@ -1,7 +1,7 @@
 import json
 import time
 
-dump_cfg = False
+dump_cfg = True
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
@@ -37,6 +37,10 @@ class TimeSeries():
         return self.data[-1][1]
     
     @property
+    def earliest(self):
+        return self.data[0]
+
+    @property
     def latest(self):
         return self.data[-1]
 
@@ -59,7 +63,8 @@ class TimeSeries():
                 
     def trim(self):
         cur_time = time.monotonic()
-        if len(self.data) > self.upto_vals:
+        if self.upto_vals > 0 and len(self.data) > self.upto_vals:
+            print("Trimmed due to too many values!")
             del self.data[:-self.upto_vals]
         if self.retain_for_s > 0:
             for n, v in enumerate(self.data):

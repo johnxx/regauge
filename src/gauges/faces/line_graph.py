@@ -9,7 +9,6 @@ import time
 import uprofile
 
 uprofile.enabled = True
-instrumentation = False
 debug = False
 dump_cfg = False
 def print_dbg(some_string, **kwargs):
@@ -58,7 +57,6 @@ class Face(GaugeFace):
         self.display_group.append(self.lines)
         self.display_group.append(self.dots)
 
-         
         self.palette = displayio.Palette(1) 
         self.palette[0] = self.options['graph_line_color']
 
@@ -67,38 +65,30 @@ class Face(GaugeFace):
         cell_fg.fill(1)
         self.sprite.blit(1, 1, cell_fg, x1=0, y1=0, x2=1, y2=1)
 
-        self.seg_x = 10
-        self.seg_y = 10
-
         self.width = 240
         self.height = 120
         
         self.margin_top = 12
         self.margin_bottom = 40
 
-        self.last_x = 0
+        self.last_x = 240
         self.last_y = 0
         
-        self.latest_tstamp = 0
-        self.ts.upto_vals = self.num_seg_x
-
-        if instrumentation:
-            self.current_second = math.floor(time.monotonic())
-            self.frames_this_second = 0
+        self.time_window = 30
+        self.dot_every = 0.5
+        
+        self.last_update = time.monotonic()
+        self.latest_tstamp = self.last_update
+        
+        self.min_y = self.max_y = 0
 
         self._setup_display()
 
-    @property
-    def num_seg_x(self):
-        return math.floor(self.width / self.seg_x)
 
     @property
     def num_seg_y(self):
         return math.floor(self.height / self.seg_y)
 
-    def pick_x(self, v):
-        return math.floor(self.last_x+self.seg_x)
-        
     def pick_y(self, v):
         as_pct = (v - self.ts.stream_spec.min_val) / self.ts.stream_spec.max_val
         # print("Showing value {} as pct {}".format(v, as_pct))
@@ -108,73 +98,69 @@ class Face(GaugeFace):
     # def pick_y(self, v):
     #     return self.height - math.floor(((v - self.stream_spec.min_val) / self.stream_spec.max_val)*self.num_seg_y*self.seg_y)
 
+    def time_to_px(self, t):
+        return (abs(t) / self.time_window) * self.width
+
     def update(self):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
             
-        num_segs = self.num_seg_x
-        print_dbg("Current number of segments: {}".format(num_segs))
-        added = 0
-        for i, v in enumerate(self.ts.since(self.latest_tstamp)):
-            uprofile.start_segment('line_graph', 'draw_dots_n_lines')
-            if v[0] > self.latest_tstamp:
-                self.latest_tstamp = v[0]
-            x = self.pick_x(i)
-            y = self.pick_y(v[1])
-            # print_dbg("{} -> {}".format(v, y))
-            print_dbg("Drawing {}, {} to {}x{}".format(i, v[1], x, y))
-            graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
-            self.dots.append(graph_pixel)
-            line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])
-            self.lines.append(line_conn)
+        t_now = time.monotonic()
+        scroll_x =  math.floor(self.time_to_px(t_now - self.last_update))
+        for s in self.lines:
+            s.x -= scroll_x
+            if s.x < 0:
+                # print("Removed line at {}x{}".format(s.x, s.y))
+                self.lines.remove(s)
+        for s in self.dots:
+            s.x -= scroll_x
+            if s.x < 0:
+                print_dbg("Removed dot at {}x{}".format(s.x, s.y))
+                self.dots.remove(s)
+        self.last_x -= scroll_x
+        if t_now - self.latest_tstamp > self.dot_every:
+            new_pairs = self.ts.since(self.latest_tstamp)
+            if len(new_pairs) > 0:
+                print_dbg("Collected {} values over {} seconds".format(len(new_pairs), t_now - self.latest_tstamp))
+                uprofile.start_segment('line_graph', 'new_dots_n_lines')
+                total = 0
+                for i, v in enumerate(new_pairs):
+                    if v[0] > self.latest_tstamp:
+                        self.latest_tstamp = v[0]
+                    total += v[1]
+                avg = total / len(new_pairs)
 
-            self.last_x = x
-            self.last_y = y
+                x = self.width
+                y = self.pick_y(avg)
+                # print_dbg("{} -> {}".format(v, y))
+                # print_dbg("Drawing {}, {} to {}x{}".format(i, v[1], x, y))
+                graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
+                self.dots.append(graph_pixel)
+                # print_dbg("Connecting {}, {} to {}, {}".format(self.last_x, self.last_y, x, y))
+                line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])
+                self.lines.append(line_conn)
 
-            added += 1
-            uprofile.end_segment('line_graph', 'draw_dots_n_lines')
+                self.last_x = x
+                self.last_y = y
+
+                uprofile.end_segment('line_graph', 'new_dots_n_lines')
         uprofile.start_segment('line_graph', 'the_rest')
-        if len(self.lines) > self.num_seg_x:
-            # print("last x was: {}".format(self.last_x))
-            self.last_x -= self.seg_x*added
-            # print("last x now: {}".format(self.last_x))
-            for s in self.lines:
-                s.x -= self.seg_x*added
-                if s.x < 0:
-                    # print("Removed line at {}x{}".format(s.x, s.y))
-                    self.lines.remove(s)
-                # if s.x > self.last_x:
-                #     self.last_x = s.x
-
-        if len(self.dots) > self.num_seg_x:
-            for s in self.dots:
-                s.x -= self.seg_x*added
-                if s.x < 0:
-                    print_dbg("Removed dot at {}x{}".format(s.x, s.y))
-                    self.dots.remove(s)
 
         min_y = self.pick_y(self.ts.min_val)
-        self.bottom_line.y = min_y
-        self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_val, self.ts.stream_spec.units['suffix'])
-        new_min = (self.text_bottom.anchored_position[0], min_y)
-        self.text_bottom.anchored_position = new_min
-
         max_y = self.pick_y(self.ts.max_val)
-        self.top_line.y = max_y
-        self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
-        new_max = (self.text_top.anchored_position[0], max_y)
-        self.text_top.anchored_position = new_max
+        if self.min_y != min_y or self.max_y != max_y:
+            
+            self.bottom_line.y = min_y
+            self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_val, self.ts.stream_spec.units['suffix'])
+            new_min = (self.text_bottom.anchored_position[0], min_y)
+            self.text_bottom.anchored_position = new_min
 
+            self.top_line.y = max_y
+            self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
+            new_max = (self.text_top.anchored_position[0], max_y)
+            self.text_top.anchored_position = new_max
+
+            self.min_y = min_y
+            self.max_y = max_y
+        self.last_update = t_now
         uprofile.end_segment('line_graph', 'the_rest')
-        
-        # if instrumentation:
-        #     this_second = math.floor(time.monotonic())
-        #     if self.current_second != this_second:
-        #         print("framerate: {}".format(self.frames_this_second))
-        #         self.frames_this_second = 1
-        #         self.current_second = this_second
-        #     else:
-        #         self.frames_this_second += 1
-        # 
-        # print_dbg("Drew {} dots and {} lines".format(len(self.dots), len(self.lines)))
-        # print_dbg("print_dbged up to: {}x{}".format(self.last_x,self.last_y))

@@ -13,7 +13,7 @@ import time
 import uprofile
 import vectorio
 
-uprofile.enabled = True
+uprofile.enabled = False
 instrumentation = False
 debug = False
 dump_cfg = False
