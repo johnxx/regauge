@@ -30,6 +30,7 @@ class Face(GaugeFace):
 
     def _setup_display(self):
         font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
+
         self.text_top = Label(font, text='', color=self.options['font_color'], scale=1,
                                 anchor_point=(0.5, 1), anchored_position=(self.options['label_offset_x'], self.options['label_offset_y']))
         self.display_group.append(self.text_top)
@@ -41,6 +42,10 @@ class Face(GaugeFace):
         self.display_group.append(self.text_bottom)
         self.bottom_line = line.Line(x0=0, y0=self.height, x1=self.width, y1=self.height, color=self.options['bottom_line_color'])
         self.display_group.append(self.bottom_line)
+        
+        self.text_right = Label(font, text='', color=self.options['font_color'], scale=1,
+                                anchor_point=(0, 0.5), anchored_position=(self.latest_x, self.last_y))
+        self.display_group.append(self.text_right)
 
 
     def __init__(self, ts, options, resources) -> None:
@@ -68,17 +73,20 @@ class Face(GaugeFace):
         self.width = 240
         self.height = 120
         
+        self.margin_right = 45
         self.margin_top = 12
         self.margin_bottom = 40
 
+        self.latest_x = self.width - self.margin_right
         self.last_x = 240
         self.last_y = 0
         
-        self.time_window = 30
-        self.dot_every = 0.5
+        self.time_window = 120
+        self.dot_every = 2
         
         self.last_update = time.monotonic()
         self.latest_tstamp = self.last_update
+        self.min_scroll = 2
         
         self.min_y = self.max_y = 0
 
@@ -107,6 +115,10 @@ class Face(GaugeFace):
             
         t_now = time.monotonic()
         scroll_x =  math.floor(self.time_to_px(t_now - self.last_update))
+        if scroll_x < self.min_scroll:
+            print_dbg("Wanted to scroll {}px. We passed instead.".format(scroll_x))
+            return
+        print_dbg("Scrolling {} ({}s)".format(scroll_x, t_now - self.last_update))
         for s in self.lines:
             s.x -= scroll_x
             if s.x < 0:
@@ -130,7 +142,7 @@ class Face(GaugeFace):
                     total += v[1]
                 avg = total / len(new_pairs)
 
-                x = self.width
+                x = self.latest_x
                 y = self.pick_y(avg)
                 # print_dbg("{} -> {}".format(v, y))
                 # print_dbg("Drawing {}, {} to {}x{}".format(i, v[1], x, y))
@@ -139,6 +151,10 @@ class Face(GaugeFace):
                 # print_dbg("Connecting {}, {} to {}, {}".format(self.last_x, self.last_y, x, y))
                 line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])
                 self.lines.append(line_conn)
+
+                self.text_right.text = self.options['fmt_string'].format(avg, self.ts.stream_spec.units['suffix']) 
+                new_avg = (self.text_right.anchored_position[0], y)
+                self.text_right.anchored_position = new_avg
 
                 self.last_x = x
                 self.last_y = y

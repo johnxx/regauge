@@ -1,7 +1,7 @@
 import time
 import math
 
-debug = True
+debug = False
 def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
@@ -20,9 +20,9 @@ class DataSource():
             "oilpres_psi": {
                 "min": 1,
                 "max": 110,
-                "pattern": "zigzag",
-                "increment": 5,
-                "every": 2
+                "pattern": "sin",
+                "increment": 1,
+                "every": 10
             },
             "eng_rpm": {
                 "min": 4400,
@@ -119,7 +119,7 @@ class DataSource():
         else:
             prev['x'] += prev['increment']
         prev['value'] = (((math.sin(prev['x'])+1) - prev['min']) / prev['max']) * 100 * prev['max']
-        # print(prev['value'])
+        print_dbg("v: {}".format(prev['value']))
         return prev
         
         

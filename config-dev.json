@@ -152,10 +152,10 @@
     },
     {
       "name": "oilpres",
-      "update_freq": 15,
+      "update_freq": 5,
       "time_series": {
         "upto_vals": 1000,
-        "retain_for_s": 31
+        "retain_for_s": 35
       },
       "stream_spec": {
         "field_spec": "oilpres_psi",

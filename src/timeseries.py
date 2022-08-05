@@ -1,6 +1,8 @@
 import json
 import time
+import uprofile
 
+uprofile.enabled = False
 dump_cfg = True
 debug = False
 def print_dbg(some_string, **kwargs):
@@ -45,6 +47,7 @@ class TimeSeries():
         return self.data[-1]
 
     @latest.setter
+    @uprofile.profile('ts', 'set')
     def latest(self, tstamp_val):
         if self.upto_vals == 1:
             self.data[0] = tstamp_val
