@@ -55,6 +55,14 @@ def merge(a, b, path=None, notifier=None, debug_below=False):
     if debug_below: print("Up!")
     return a
 
+def chunked_read(f, size_k=1):
+    size = size_k*1024
+    while(True):
+        chunk = f.read(size)
+        yield chunk
+        if len(chunk == 0):
+            break
+
 def serve_file(path_el):
     path = os.sep.join(path_el)
     headers = {}
@@ -65,7 +73,8 @@ def serve_file(path_el):
 
     try:
         with open(path, "rb") as f:
-            return (200, headers, f.read())
+            return (200, headers, chunked_read(f, size_k=1))
+            # return (200, headers, f.read())
     except OSError as e:
         return (404, {}, "{} not found".format(path))
 

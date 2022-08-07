@@ -80,17 +80,41 @@ def __read_request(client):
 
     return request
 
-def __send_response(client, code, headers, data):
-    headers["Server"] = "Ampule/0.0.1-alpha (CircuitPython)"
-    headers["Connection"] = "close"
-    headers["Content-Length"] = len(data)
+def __chunked_response_helper(client, response, data):
+    for chunk in data:
+        print("A")
 
-    with io.BytesIO() as response:
-        response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
-        for k, v in headers.items():
-            response.write(("%s: %s\r\n" % (k, v)).encode())
-
+        response.write(b"{}\r\n".format(len(chunk)))
+        response.write(chunk)
         response.write(b"\r\n")
+
+        response.flush()
+        response_len = response.seek(0,whence=2)
+        response.seek(0)
+
+        # unreliable sockets on ESP32-S2: see https://github.com/adafruit/circuitpython/issues/4420#issuecomment-814695753
+        bytes_sent_total = 0
+        while True:
+            try:
+                bytes_sent = client.send(response.read())
+                print("B")
+                bytes_sent_total += bytes_sent
+                if bytes_sent_total >= response_len:
+                    break
+                else:
+                    response.seek(bytes_sent_total)
+                    print("C")
+                    continue
+            except OSError as e:
+                if e.errno == 11:       # EAGAIN: no bytes have been transfered
+                    print("D")
+                    continue
+                else:
+                    print("E")
+                    break
+        response.truncate()
+
+def __fixed_size_response_helper(client, response, data):
         if(isinstance(data, str)):
             response.write(data.encode())
         else:
@@ -107,6 +131,7 @@ def __send_response(client, code, headers, data):
         while True:
             try:
                 bytes_sent = client.send(response_buffer)
+                print(response_buffer)
                 bytes_sent_total += bytes_sent
                 if bytes_sent_total >= response_length:
                     return bytes_sent_total
@@ -118,6 +143,29 @@ def __send_response(client, code, headers, data):
                     continue
                 else:
                     return bytes_sent_total
+    
+def __send_response(client, code, headers, data):
+    if hasattr(data, '__next__') and not isinstance(data, str):
+        chunked = True
+    else:
+        chunked = False
+    headers["Server"] = "Ampule/0.0.1-alpha (CircuitPython)"
+    headers["Connection"] = "close"
+    if chunked:
+        headers["Transfer-Encoding"] = 'chunked'
+    else:
+        headers["Content-Length"] = len(data)
+    with io.BytesIO() as response:
+        for k, v in headers.items():
+            response.write(("%s: %s\r\n" % (k, v)).encode())
+        response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
+
+        # response.write(b"\r\n")
+
+        if chunked:
+            return __chunked_response_helper(client, response, data)
+        else:
+            return __fixed_size_response_helper(client, response, data)
 
 def __on_request(method, rule, request_handler):
     regex = "^"

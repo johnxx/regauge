@@ -15,7 +15,7 @@
       ]
     },
     "config_listener": {
-      "enabled": false,
+      "enabled": true,
       "bind_addr": "0.0.0.0",
       "listen_port": 80
     },
@@ -26,7 +26,7 @@
   },
   "hardware": {
     "wifi": {
-      "enabled": false,
+      "enabled": true,
       "passphrase": "<redacted>",
       "ssid": "SomethingClever"
     },

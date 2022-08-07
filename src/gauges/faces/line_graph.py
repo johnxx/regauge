@@ -8,7 +8,7 @@ import math
 import time
 import uprofile
 
-uprofile.enabled = True
+uprofile.enabled = False
 debug = False
 dump_cfg = False
 def print_dbg(some_string, **kwargs):
