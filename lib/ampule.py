@@ -81,45 +81,42 @@ def __read_request(client):
     return request
 
 def __chunked_response_helper(client, response, data):
-    for chunk in data:
-        print("A")
+    bytes_sent_total = 0
+    for chunk in data():
 
         response.write(b"{}\r\n".format(len(chunk)))
         response.write(chunk)
         response.write(b"\r\n")
 
         response.flush()
-        response_len = response.seek(0,whence=2)
+        response_len = response.tell()
         response.seek(0)
 
         # unreliable sockets on ESP32-S2: see https://github.com/adafruit/circuitpython/issues/4420#issuecomment-814695753
-        bytes_sent_total = 0
+        bytes_sent_chunk = 0
         while True:
             try:
-                bytes_sent = client.send(response.read())
-                print("B")
-                bytes_sent_total += bytes_sent
-                if bytes_sent_total >= response_len:
+                bytes_sent = client.send(response.read(response_len))
+                bytes_sent_chunk += bytes_sent
+                if bytes_sent_chunk >= response_len:
                     break
                 else:
-                    response.seek(bytes_sent_total)
-                    print("C")
+                    response.seek(bytes_sent_chunk)
                     continue
             except OSError as e:
                 if e.errno == 11:       # EAGAIN: no bytes have been transfered
-                    print("D")
                     continue
                 else:
-                    print("E")
                     break
-        response.truncate()
+        bytes_sent_total += bytes_sent_chunk
+    return bytes_sent_total
 
 def __fixed_size_response_helper(client, response, data):
         if(isinstance(data, str)):
             response.write(data.encode())
         else:
             response.write(data)
-        response.write(b"\r\n")
+        # response.write(b"\r\n")
 
         response.flush()
         response.seek(0)
@@ -131,7 +128,6 @@ def __fixed_size_response_helper(client, response, data):
         while True:
             try:
                 bytes_sent = client.send(response_buffer)
-                print(response_buffer)
                 bytes_sent_total += bytes_sent
                 if bytes_sent_total >= response_length:
                     return bytes_sent_total
@@ -145,22 +141,20 @@ def __fixed_size_response_helper(client, response, data):
                     return bytes_sent_total
     
 def __send_response(client, code, headers, data):
-    if hasattr(data, '__next__') and not isinstance(data, str):
+    if "Transfer-Encoding" in headers and headers["Transfer-Encoding"] == 'chunked':
         chunked = True
+
     else:
+        headers["Content-Length"] = len(data)
         chunked = False
     headers["Server"] = "Ampule/0.0.1-alpha (CircuitPython)"
     headers["Connection"] = "close"
-    if chunked:
-        headers["Transfer-Encoding"] = 'chunked'
-    else:
-        headers["Content-Length"] = len(data)
     with io.BytesIO() as response:
+        response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
         for k, v in headers.items():
             response.write(("%s: %s\r\n" % (k, v)).encode())
-        response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
 
-        # response.write(b"\r\n")
+        response.write(b"\r\n")
 
         if chunked:
             return __chunked_response_helper(client, response, data)
@@ -203,9 +197,9 @@ def listen(socket, context=None, timeout=30):
         if match:
             args, route = match
             status, headers, body = route["func"](request, *args)
-            __send_response(client, status, headers, body)
+            total_transferred = __send_response(client, status, headers, body)
         else:
-            __send_response(client, 404, {}, "Not found")
+            total_transferred = __send_response(client, 404, {}, "Not found")
         if log_level >= 6:
             print("ampule: {} - friend [{}] \"{} {} {}\" {} {}"
                 .format(
@@ -215,7 +209,7 @@ def listen(socket, context=None, timeout=30):
                     request.path,
                     request.version,
                     status,
-                    len(body)
+                    total_transferred
                 )
             )
     except BaseException as e:

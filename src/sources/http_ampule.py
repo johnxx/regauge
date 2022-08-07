@@ -55,13 +55,16 @@ def merge(a, b, path=None, notifier=None, debug_below=False):
     if debug_below: print("Up!")
     return a
 
-def chunked_read(f, size_k=1):
+def chunked_read(path, size_k=1):
     size = size_k*1024
-    while(True):
-        chunk = f.read(size)
-        yield chunk
-        if len(chunk == 0):
-            break
+    def gennie():
+        with open(path, "rb") as f:
+            while(True):
+                chunk = f.read(size)
+                if not chunk:
+                    break
+                yield chunk
+    return gennie
 
 def serve_file(path_el):
     path = os.sep.join(path_el)
@@ -72,9 +75,10 @@ def serve_file(path_el):
         headers['Content-Type'] = "text/javascript"
 
     try:
-        with open(path, "rb") as f:
-            return (200, headers, chunked_read(f, size_k=1))
-            # return (200, headers, f.read())
+        headers["Transfer-Encoding"] = "chunked"
+        return (200, headers, chunked_read(path, size_k=2))
+        # return (200, headers, chunked_read(f, size_k=1))
+        # return (200, headers, f.read())
     except OSError as e:
         return (404, {}, "{} not found".format(path))
 
