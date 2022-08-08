@@ -76,7 +76,7 @@ def serve_file(path_el):
 
     try:
         headers["Transfer-Encoding"] = "chunked"
-        return (200, headers, chunked_read(path, size_k=2))
+        return (200, headers, chunked_read(path, size_k=8))
         # return (200, headers, chunked_read(f, size_k=1))
         # return (200, headers, f.read())
     except OSError as e:

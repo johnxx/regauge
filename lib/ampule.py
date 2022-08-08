@@ -80,11 +80,40 @@ def __read_request(client):
 
     return request
 
+def __safe_send(client, response, response_len):
+    # unreliable sockets on ESP32-S2: see https://github.com/adafruit/circuitpython/issues/4420#issuecomment-814695753
+    bytes_sent_chunk = 0
+    while True:
+        try:
+            print("About to send {}".format(response_len - bytes_sent_chunk))
+            # honk = response.read(response_len - bytes_sent_chunk)
+            # print(honk)
+            # bytes_sent = client.send(honk)
+            bytes_sent = client.send(response.read(response_len - bytes_sent_chunk))
+            print("Actually sent {}".format(bytes_sent))
+            bytes_sent_chunk += bytes_sent
+            if bytes_sent_chunk >= response_len:
+                break
+            else:
+                response.seek(bytes_sent_chunk)
+                print("Seeked to {} and continuing".format(bytes_sent_chunk))
+                continue
+        except OSError as e:
+            if e.errno == 11:       # EAGAIN: no bytes have been transfered
+                response.seek(bytes_sent_chunk)
+                print("Trying again because of {}".format(str(e)))
+                continue
+            else:
+                print("Bailed out because of {}".format(str(e)))
+                raise e
+    return bytes_sent_chunk
+
 def __chunked_response_helper(client, response, data):
     bytes_sent_total = 0
     for chunk in data():
 
-        response.write(b"{}\r\n".format(len(chunk)))
+        response.write(b"{:X}\r\n".format(len(chunk)))
+        print("chunk: {}".format(len(chunk)))
         response.write(chunk)
         response.write(b"\r\n")
 
@@ -92,23 +121,18 @@ def __chunked_response_helper(client, response, data):
         response_len = response.tell()
         response.seek(0)
 
-        # unreliable sockets on ESP32-S2: see https://github.com/adafruit/circuitpython/issues/4420#issuecomment-814695753
-        bytes_sent_chunk = 0
-        while True:
-            try:
-                bytes_sent = client.send(response.read(response_len))
-                bytes_sent_chunk += bytes_sent
-                if bytes_sent_chunk >= response_len:
-                    break
-                else:
-                    response.seek(bytes_sent_chunk)
-                    continue
-            except OSError as e:
-                if e.errno == 11:       # EAGAIN: no bytes have been transfered
-                    continue
-                else:
-                    break
+        print("Going to send {}".format(response_len))
+        bytes_sent_chunk = __safe_send(client, response, response_len)
+        print("chunk bytes sent: {}".format(bytes_sent_chunk))
         bytes_sent_total += bytes_sent_chunk
+        response.seek(0)
+    response.write(b"0\r\n")
+    response.write(b"\r\n")
+    response.flush()
+    response_len = response.tell()
+    response.seek(0)
+    bytes_sent_total += __safe_send(client, response, response_len)
+    
     return bytes_sent_total
 
 def __fixed_size_response_helper(client, response, data):
@@ -149,6 +173,7 @@ def __send_response(client, code, headers, data):
         chunked = False
     headers["Server"] = "Ampule/0.0.1-alpha (CircuitPython)"
     headers["Connection"] = "close"
+    sent_bytes = 0
     with io.BytesIO() as response:
         response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
         for k, v in headers.items():
@@ -157,9 +182,11 @@ def __send_response(client, code, headers, data):
         response.write(b"\r\n")
 
         if chunked:
-            return __chunked_response_helper(client, response, data)
+            sent_bytes = __chunked_response_helper(client, response, data)
         else:
-            return __fixed_size_response_helper(client, response, data)
+            sent_bytes =  __fixed_size_response_helper(client, response, data)
+        response.close()
+    return sent_bytes
 
 def __on_request(method, rule, request_handler):
     regex = "^"
@@ -185,7 +212,7 @@ def __match_route(path, method):
             return (match.groups(), route)
     return None
 
-def listen(socket, context=None, timeout=30):
+def listen(socket, context=None, timeout=15):
     client, remote_address = socket.accept()
     log_level = 6
     try:
