@@ -10,6 +10,9 @@ TIMEOUT = 30
 routes = []
 variable_re = re.compile("^<([a-zA-Z]+)>$")
 
+def print_dbg(s):
+    pass
+
 class Request:
     def __init__(self, method, full_path, version="HTTP/1.0"):
         self.method = method
@@ -85,26 +88,26 @@ def __safe_send(client, response, response_len):
     bytes_sent_chunk = 0
     while True:
         try:
-            print("About to send {}".format(response_len - bytes_sent_chunk))
+            print_dbg("About to send {}".format(response_len - bytes_sent_chunk))
             # honk = response.read(response_len - bytes_sent_chunk)
             # print(honk)
             # bytes_sent = client.send(honk)
             bytes_sent = client.send(response.read(response_len - bytes_sent_chunk))
-            print("Actually sent {}".format(bytes_sent))
+            print_dbg("Actually sent {}".format(bytes_sent))
             bytes_sent_chunk += bytes_sent
             if bytes_sent_chunk >= response_len:
                 break
             else:
                 response.seek(bytes_sent_chunk)
-                print("Seeked to {} and continuing".format(bytes_sent_chunk))
+                print_dbg("Seeked to {} and continuing".format(bytes_sent_chunk))
                 continue
         except OSError as e:
             if e.errno == 11:       # EAGAIN: no bytes have been transfered
                 response.seek(bytes_sent_chunk)
-                print("Trying again because of {}".format(str(e)))
+                print_dbg("Trying again because of {}".format(str(e)))
                 continue
             else:
-                print("Bailed out because of {}".format(str(e)))
+                print_dbg("Bailed out because of {}".format(str(e)))
                 raise e
     return bytes_sent_chunk
 
@@ -113,7 +116,7 @@ def __chunked_response_helper(client, response, data):
     for chunk in data():
 
         response.write(b"{:X}\r\n".format(len(chunk)))
-        print("chunk: {}".format(len(chunk)))
+        print_dbg("chunk: {}".format(len(chunk)))
         response.write(chunk)
         response.write(b"\r\n")
 
@@ -121,9 +124,9 @@ def __chunked_response_helper(client, response, data):
         response_len = response.tell()
         response.seek(0)
 
-        print("Going to send {}".format(response_len))
+        print_dbg("Going to send {}".format(response_len))
         bytes_sent_chunk = __safe_send(client, response, response_len)
-        print("chunk bytes sent: {}".format(bytes_sent_chunk))
+        print_dbg("chunk bytes sent: {}".format(bytes_sent_chunk))
         bytes_sent_total += bytes_sent_chunk
         response.seek(0)
     response.write(b"0\r\n")
@@ -240,7 +243,7 @@ def listen(socket, context=None, timeout=15):
                 )
             )
     except BaseException as e:
-        print("Error with request: {}: {}".format(type(e), e))
+        print_dbg("Error with request: {}: {}".format(type(e), e))
         # print(json.dumps(e.__traceback__.tb_frame.__dict__))
         # trace = []
         # ex = e

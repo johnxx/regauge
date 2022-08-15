@@ -100,7 +100,8 @@ def files(request, filename):
 
 @ampule.route("/api/config")
 def get_config(request):
-    return (200, {}, json.dumps(request.context.target))
+    headers = { 'Access-Control-Allow-Origin': '*' }
+    return (200, headers, json.dumps(request.context.target))
 
 @ampule.route("/api/config", method='POST')
 def post_config(request):
@@ -109,6 +110,15 @@ def post_config(request):
     merge(request.context.target, json.loads(request.body), notifier=request.context.msgbus.pub)
     return (200, {}, json.dumps("OK!"))
 
+@ampule.route("/api/config", method='OPTIONS')
+def cors_options(request):
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'X-PINGOTHER, Content-Type',
+        'Access-Control-Max-Age': 86400
+    }
+    return (204, headers, '')
 
 class ConfigSource():
 
