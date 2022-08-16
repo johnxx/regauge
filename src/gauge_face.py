@@ -31,8 +31,8 @@ class GaugeFace:
                 options[key] = val
         return options
 
-    def config_updated():
-        pass
+    def config_updated(self, face):
+        raise NotImplementedError
     
     def update():
         pass
