@@ -29,8 +29,14 @@ def merge(a, b, path=None, notifier=None, debug_below=False):
                 if debug_below: print("A")
                 a_names = {}
                 for idx_a, el_a in enumerate(a[key]):
+                    if debug_below: print("B-")
+                    print(str(idx_a))
+                    print(el_a)
+                    print(el_a['name'])
+                    # @TODO: We're not sending the right thing from the client
                     if debug_below: print("B")
                     a_names[el_a['name']] = idx_a
+                    if debug_below: print("B+")
                 for idx_b, el_b in enumerate(b[key]):
                     if debug_below: print("C")
                     if el_b['name'] in a_names:
@@ -107,7 +113,8 @@ def get_config(request):
 def post_config(request):
     # print(request.body)
     # print("Got config!")
-    merge(request.context.target, json.loads(request.body), notifier=request.context.msgbus.pub)
+    headers = { 'Access-Control-Allow-Origin': '*' }
+    merge(request.context.target, json.loads(request.body), notifier=request.context.msgbus.pub, debug_below=True)
     return (200, {}, json.dumps("OK!"))
 
 @ampule.route("/api/config", method='OPTIONS')

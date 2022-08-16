@@ -178,7 +178,10 @@ def __send_response(client, code, headers, data):
     headers["Connection"] = "close"
     sent_bytes = 0
     with io.BytesIO() as response:
-        response.write(("HTTP/1.1 %i OK\r\n" % code).encode())
+        status = "OK"
+        if code == 204:
+            status = "No Content"
+        response.write(("HTTP/1.1 %i %s\r\n" % (code, status)).encode())
         for k, v in headers.items():
             response.write(("%s: %s\r\n" % (k, v)).encode())
 
@@ -264,7 +267,19 @@ def listen(socket, context=None, timeout=15):
         # print("Error with request", str(e))
         # print("Error with request:", str(json.dumps(e)))
         #traceback.print_exception(None, e, sys.exc_info()[2])
-        __send_response(client, 500, {}, "Error processing request")
+        total_transferred = __send_response(client, 500, {}, "Error processing request")
+        if log_level >= 6:
+            print("ampule: {} - friend [{}] \"{} {} {}\" {} {}"
+                .format(
+                    remote_address[0],
+                    time.monotonic(),
+                    request.method,
+                    request.path,
+                    request.version,
+                    500,
+                    total_transferred
+                )
+            )
     finally:
         if log_level >= 7:
             print("Closing connection")
