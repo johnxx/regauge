@@ -79,6 +79,7 @@ class Face(GaugeFace):
         print_dbg("Color set to: {}".format(self.options['normal_color']))
         self.pixels.fill(self.options['off_color'])
         self.prev_idx = 0
+        self.label.color = options['font_color']
         self.update()
 
     def update(self):

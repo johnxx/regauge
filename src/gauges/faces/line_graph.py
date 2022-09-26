@@ -19,7 +19,7 @@ class Face(GaugeFace):
     default_options = {
         # 'label_font': 'UpheavalTT-BRK--20.bdf',
         'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
-        'font_color':0xCCCCCC, 
+        'font_color': 0xCCCCCC, 
         'graph_line_color': 0x0066AA,
         'top_line_color':0x666666, 
         'bottom_line_color':0x666666, 
@@ -109,6 +109,20 @@ class Face(GaugeFace):
     def time_to_px(self, t):
         return (abs(t) / self.time_window) * self.width
 
+    def config_updated(self, options):
+        self.options = self._apply_defaults(options)
+        self.palette[0] = self.options['graph_line_color']
+        # for d in self.lines:
+        #     d.pixel_shader = self.palette
+        for s in self.lines:
+            s._palette = self.palette
+        self.text_bottom.color = options['font_color']
+        self.text_top.color = options['font_color']
+        self.text_right.color = options['font_color']
+        self.bottom_line.color = options['font_color']
+        self.top_line.color = options['font_color']
+        self.update()
+
     def update(self):
         # self._trim_sprites(self.lines)
         # self._trim_sprites(self.dots)
@@ -162,6 +176,9 @@ class Face(GaugeFace):
                 uprofile.end_segment('line_graph', 'new_dots_n_lines')
         uprofile.start_segment('line_graph', 'the_rest')
 
+        self.text_bottom.text = self.options['fmt_string'].format(self.ts.min_val, self.ts.stream_spec.units['suffix'])
+        self.text_top.text = self.options['fmt_string'].format(self.ts.max_val, self.ts.stream_spec.units['suffix'])
+        
         min_y = self.pick_y(self.ts.min_val)
         max_y = self.pick_y(self.ts.max_val)
         if self.min_y != min_y or self.max_y != max_y:

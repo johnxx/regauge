@@ -3,7 +3,7 @@ import time
 import uprofile
 
 uprofile.enabled = False
-dump_cfg = True
+dump_cfg = False
 debug = False
 def print_dbg(some_string, **kwargs):
     if debug:

@@ -29,7 +29,7 @@ def print_dbg(some_string, **kwargs):
 
 def initialize_gauges(layout, resources):
     gauge_tasks = []
-    for block in layout:
+    for idx, block in enumerate(layout):
         # @TODO: Deprecated settings. May return in another form at some point in the future
         block['type'] = 'simple'
         block['sub_type'] = 'SimpleGauge'
@@ -70,7 +70,7 @@ def initialize_gauges(layout, resources):
         # print(json.dumps(gauge_resources))
         gauge = gauge_class(block, gauge_resources)
         if 'config_bus' in resources:
-            print("{} wants to subscribe to config.layout.{}".format(block['name'], block['name']))
+            print("{} subscribed to config.layout.{}".format(block['name'], block['name']))
             resources['config_bus'].sub(gauge.config_updated, "config.layout.{}".format(block['name']))
         if 'data_bus' in resources:
             for field_spec in gauge.subscribed_streams:
@@ -97,6 +97,10 @@ def setup_tasks(config, resources):
                 options['type'] = 'canbus'
             elif data_source == 'data_mock':
                 options['type'] = 'mock'
+            elif data_source == 'data_i2c_scd4x':
+                options['type'] = 'i2c_scd4x'
+            elif data_source == 'data_i2c_pmsa003i':
+                options['type'] = 'i2c_pmsa003i'
             else:
                 print("Failed to infer type for {}".format(data_source))
         if 'enabled' not in options:
@@ -146,15 +150,22 @@ def setup_hardware(hardware):
         rx_pin = getattr(board, can_cfg['pins']['rx'])
         tx_pin = getattr(board, can_cfg['pins']['tx'])
         resources['can'] = canio.CAN(rx=rx_pin, tx=tx_pin, baudrate=can_cfg['bit_rate'], auto_restart=True)
+        
+    if hardware['i2c']['enabled']:
+        import busio
+        i2c_cfg = hardware['i2c']
+        scl_pin = getattr(board, i2c_cfg['pins']['scl'])
+        sda_pin = getattr(board, i2c_cfg['pins']['sda'])
+        resources['i2c'] = busio.I2C(scl_pin, sda_pin)
 
     if hardware['wifi']['enabled']:
         wifi_cfg = hardware['wifi']
         import wifi
         import socketpool
 
-        print_dbg("Connecting to {}".format(wifi_cfg['ssid']))
+        print("Connecting to {}".format(wifi_cfg['ssid']))
         wifi.radio.connect(wifi_cfg['ssid'], wifi_cfg['passphrase'])
-        print_dbg("Connected! IP: {}".format(wifi.radio.ipv4_address))
+        print("Connected! IP: {}".format(wifi.radio.ipv4_address))
 
         resources['socket_pool'] = socketpool.SocketPool(wifi.radio)
         
@@ -236,65 +247,6 @@ def setup_hardware(hardware):
 
     return resources
 
-
-def allocate_resources(layout, resources):
-    return "Unused!"
-    for name, config in layout.items():
-        if config['type'] == 'neopixel_slice':
-            if 'step' in config and config['step']:
-                keys = range(
-                    config['start'],
-                    config['end'],
-                    config['step']
-                )
-            else:
-                keys = range(
-                    config['start'],
-                    config['end']
-                )
-            if 'reverse' in config and config['reverse']:
-                keys = list(reversed(keys))
-                
-            resources[name] = neopixel_slice.NeoPixelSlice(
-                resources[config['hw_resource']], 
-                keys
-            )
-        elif config['type'] == 'display_group':
-            resources[name] = displayio.Group(x=config['x_offset'], y=config['y_offset'])
-            resources[config['hw_resource']]['main_context'].append(resources[name])
-
-    # @TODO: Overlay HACK!
-    # overlay_color = 0x0099FF
-
-    # overlay = displayio.Group()
-    # resources[config['hw_resource']]['main_context'].append(overlay)
-    # mid_line = line.Line(x0=0, y0=120, x1=240, y1=120, color=overlay_color)
-    # overlay.append(mid_line)
-
-    # font_name = 'Cloude_Regular_Bold_1.02-32.bdf'
-    # font = bitmap_font.load_font("/share/fonts/" + font_name)
-
-    # text_top = Label(font, text='Coolant', color=overlay_color, scale=1, anchor_point=(0, 1), anchored_position=(10, 120))
-    # overlay.append(text_top)
-
-    # text_bottom = Label(font, text='Oil Pressure', color=overlay_color, scale=1, anchor_point=(1, 0), anchored_position=(230, 120))
-    # overlay.append(text_bottom)
-
-    # bottom_line = line.Line(x0=0, y0=225, x1=240, y1=225, color=overlay_color)
-    # overlay.append(bottom_line)
-
-    # leds_text_bottom = Label(font, text='RPM', color=overlay_color, scale=1, anchor_point=(0.5, 1), anchored_position=(120, 235))
-    # overlay.append(leds_text_bottom)
-
-    # top_line = line.Line(x0=0, y0=15, x1=240, y1=15, color=overlay_color)
-    # overlay.append(top_line)
-
-    # leds_text_top = Label(font, text='AFR', color=overlay_color, scale=1, anchor_point=(0.5, 0), anchored_position=(120, 5))
-    # overlay.append(leds_text_top)
-
-    return resources
-            
-    
 
 if __name__ == '__main__':
     fp = open('config.json', 'r')

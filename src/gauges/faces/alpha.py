@@ -184,9 +184,9 @@ class Face(GaugeFace):
         'position': 'top',
         'gradient': "yellow_blurple",
         'label_font': 'PixelLCD-7-16.bdf',
-        'font_color':0xCCCCCC, 
+        'font_color': 0xCCCCCC, 
         'fmt_string': "{:>3.0f}{}", 
-        'bar_color':0xFF8888, 
+        'bar_color': 0xFF8888, 
     }
     gradients = {
         # blue to orange: 9.5/10
@@ -372,6 +372,34 @@ class Face(GaugeFace):
         elif as_pct < 0:
             as_pct = 0
         return math.floor(as_pct * len(self.segments))
+
+    def config_updated(self, options):
+        self.options = self._apply_defaults(options)
+        self.label.color = self.options['font_color']
+        if 'gradient_start' in options and 'gradient_end' in options:
+            start = options['gradient_start'].lstrip('#')
+            end = options['gradient_end'].lstrip('#')
+            start_rgb = tuple(int(start[i:i+2], 16) for i in (0, 2, 4))
+            end_rgb = tuple(int(end[i:i+2], 16) for i in (0, 2, 4))
+            n = len(self.segments) - 1
+            r_step = int((end_rgb[0] - start_rgb[0])/n)
+            g_step = int((end_rgb[1] - start_rgb[1])/n)
+            b_step = int((end_rgb[2] - start_rgb[2])/n)
+            seg_step = (r_step, g_step, b_step)
+            # seg_color = int(start, 16)
+            seg_rgb = start_rgb
+            print(r_step)
+            print(g_step)
+            print(b_step)
+            # print("Color: {}".format(seg_color))
+            for s in self.segments:
+                print("R: {}, G: {}, B: {}".format(seg_rgb[0], seg_rgb[1], seg_rgb[2]))
+                pal = displayio.Palette(2)
+                pal[0] = 0x222222
+                pal[1] = seg_rgb
+                s.pixel_shader = pal
+                # print("Color: {}".format(seg_color))
+                seg_rgb = (seg_rgb[0] + seg_step[0], seg_rgb[1] + seg_step[1], seg_rgb[2] + seg_step[2])
 
     @uprofile.profile('alpha', 'update')
     def update(self):

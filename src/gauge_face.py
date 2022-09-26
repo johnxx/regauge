@@ -29,6 +29,12 @@ class GaugeFace:
         for key, val in self.default_options.items():
             if key not in options:
                 options[key] = val
+        for key, val in options.items():
+            if 'color' in key and isinstance(val, str):
+                if val.startswith('#'):
+                    val = val[1:]
+                options[key] = int(val, 16)
+
         return options
 
     def config_updated(self, face):
