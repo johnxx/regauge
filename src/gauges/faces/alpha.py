@@ -15,7 +15,7 @@ import vectorio
 
 uprofile.enabled = False
 instrumentation = False
-debug = False
+debug = True
 dump_cfg = False
 
 y_offset = 120

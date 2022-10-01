@@ -31,6 +31,12 @@ class StreamSpec():
             'conversion_factor': 1
             # 'conversion_factor': 0.0625
         },
+        'lpm': {
+            'name': 'l/min',
+            'suffix': 'lpm',
+            'conversion_factor': 1
+            # 'conversion_factor': 0.0625
+        },
     }
 
     def __init__(self, field_spec, min_val=0, max_val=100, sig_digs=0, units=None) -> None:

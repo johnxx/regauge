@@ -39,6 +39,43 @@ class DataSource():
                 "every": 2
             }
         }),
+        (0x998, {
+            "pm2_5": {
+                "min": 0,
+                "max": 150,
+                "pattern": "sin",
+                "increment": 0.15,
+                "every": 1
+            },
+            "co2_ppm": {
+                "min": 0,
+                "max": 5000,
+                "pattern": "zigzag",
+                "increment": 1,
+                "every": 1
+            },
+            "temp_cel": {
+                "min": 0,
+                "max": 100,
+                "pattern": "zigzag",
+                "increment": 1,
+                "every": 1
+            },
+            "rhum_pct": {
+                "min": 0,
+                "max": 100,
+                "pattern": "zigzag",
+                "increment": 100,
+                "every": 1
+            },
+            "liquid_lpm": {
+                "min": 0,
+                "max": 10,
+                "pattern": "zigzag",
+                "increment": 1,
+                "every": 10
+            },
+        }),
         (0x999, {
             "cpu_pct": {
                 "min": 0,

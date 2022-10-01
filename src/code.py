@@ -101,6 +101,8 @@ def setup_tasks(config, resources):
                 options['type'] = 'i2c_scd4x'
             elif data_source == 'data_i2c_pmsa003i':
                 options['type'] = 'i2c_pmsa003i'
+            elif data_source == 'data_dio_flow':
+                options['type'] = 'dio_flow'
             else:
                 print("Failed to infer type for {}".format(data_source))
         if 'enabled' not in options:
