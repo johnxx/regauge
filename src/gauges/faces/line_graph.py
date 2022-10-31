@@ -79,7 +79,7 @@ class Face(GaugeFace):
 
         self.latest_x = self.width - self.margin_right
         self.last_x = 240
-        self.last_y = 0
+        self.last_y = 0 - self.margin_bottom
         
         self.time_window = 120
         self.dot_every = 2
@@ -160,7 +160,7 @@ class Face(GaugeFace):
                 y = self.pick_y(avg)
                 # print_dbg("{} -> {}".format(v, y))
                 # print_dbg("Drawing {}, {} to {}x{}".format(i, v[1], x, y))
-                graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=1, width=1, pixel_shader=self.palette, x=x, y=y)
+                graph_pixel = displayio.TileGrid(bitmap=self.sprite, height=2, width=2, pixel_shader=self.palette, x=x, y=y)
                 self.dots.append(graph_pixel)
                 # print_dbg("Connecting {}, {} to {}, {}".format(self.last_x, self.last_y, x, y))
                 line_conn = line.Line(x0=self.last_x, y0=self.last_y, x1=x, y1=y, color=self.palette[0])

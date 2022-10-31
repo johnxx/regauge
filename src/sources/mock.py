@@ -72,8 +72,8 @@ class DataSource():
                 "min": 0,
                 "max": 10,
                 "pattern": "zigzag",
-                "increment": 1,
-                "every": 10
+                "increment": .1,
+                "every": 1
             },
         }),
         (0x999, {

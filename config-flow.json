@@ -82,31 +82,31 @@
   },
   "layout": [
     {
-      "name": "hum",
-      "update_freq": 1,
+      "name": "liquid_leds",
+      "update_freq": 10,
       "time_series": {
         "upto_vals": 1
       },
       "stream_spec": {
-        "field_spec": "rhum_pct",
+        "field_spec": "liquid_lpm",
         "min_val": 0,
-        "max_val": 100
+        "max_val": 10
       },
       "gauge_face": {
         "ofType": "2",
-        "normal_color": 6619391,
+        "normal_color": 26282,
         "warning_color": 65280,
         "critical_color": 16711782,
-        "warning_level": 75,
-        "critical_level": 90,
+        "warning_level": 5,
+        "critical_level": 70,
         "label": "top",
         "fmt_string": "{:>1.2f}{}"
       },
       "resources": [
         {
           "ofType": "1",
-          "start": 3,
-          "end": -4,
+          "start": 7,
+          "end": -9,
           "step": -1
         },
         {
@@ -118,7 +118,7 @@
     },
     {
       "name": "liquid_text",
-      "update_freq": 1,
+      "update_freq": 10,
       "time_series": {
         "upto_vals": 1
       },
@@ -139,25 +139,25 @@
       }]
     },
     {
-      "name": "liquid_alpha",
+      "name": "liquid_line",
       "update_freq": 20,
       "time_series": {
-        "upto_vals": 60,
+        "upto_vals": 6000,
         "retain_for_s": 60
       },
       "stream_spec": {
         "field_spec": "liquid_lpm",
         "min_val": 0,
-        "max_val": 1500
+        "max_val": 10
       },
       "gauge_face": {
-        "ofType": "3",
+        "ofType": "0",
         "position": "bottom"
       },
       "resources": [{
         "ofType": "0",
         "x_offset": 0,
-        "y_offset": 0
+        "y_offset": 120
       }]
     }
   ]

@@ -84,12 +84,12 @@
       "stream_spec": {
         "field_spec": "pm2_5",
         "min_val": 0,
-        "max_val": 150
+        "max_val": 100
       },
       "gauge_face": {
         "ofType": "2",
-        "normal_color": 204,
-        "warning_color": 52411,
+        "normal_color": 38143,
+        "warning_color": 12386559,
         "critical_color": 13391104,
         "warning_level": 75,
         "critical_level": 105,
@@ -109,25 +109,25 @@
       ]
     },
     {
-      "name": "hum",
+      "name": "co2",
       "update_freq": 1,
       "time_series": {
         "upto_vals": 1
       },
       "stream_spec": {
-        "field_spec": "rhum_pct",
+        "field_spec": "co2_ppm",
         "min_val": 0,
-        "max_val": 100
+        "max_val": 2000
       },
       "gauge_face": {
         "ofType": "2",
-        "normal_color": 6619391,
-        "warning_color": 65280,
-        "critical_color": 16711782,
-        "warning_level": 75,
-        "critical_level": 90,
+        "normal_color": 65458,
+        "warning_color": 12648192,
+        "critical_color": 16739072,
+        "warning_level": 1500,
+        "critical_level": 3000,
         "label": "top",
-        "fmt_string": "{:>1.2f}{}"
+        "fmt_string": "{:>1.0f}{}"
       },
       "resources": [
         {
@@ -166,25 +166,26 @@
       }]
     },
     {
-      "name": "co2",
+      "name": "hum",
       "update_freq": 1,
       "time_series": {
         "upto_vals": 60,
         "retain_for_s": 60
       },
       "stream_spec": {
-        "field_spec": "co2_ppm",
+        "field_spec": "rhum_pct",
         "min_val": 0,
-        "max_val": 1500
+        "max_val": 100
       },
       "gauge_face": {
-        "ofType": "0",
-        "position": "bottom"
+        "ofType": "3",
+        "position": "bottom",
+        "gradient": "yellow_blurple"
       },
       "resources": [{
         "ofType": "0",
         "x_offset": 0,
-        "y_offset": 120
+        "y_offset": 0
       }]
     }
   ]

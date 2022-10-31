@@ -31,6 +31,18 @@ class StreamSpec():
             'conversion_factor': 1
             # 'conversion_factor': 0.0625
         },
+        'ppm': {
+            'name': 'parts/million',
+            'suffix': 'ppm',
+            'conversion_factor': 1
+            # 'conversion_factor': 0.0625
+        },
+        '5': {
+            'name': 'ug/m^3',
+            'suffix': 'pm2.5',
+            'conversion_factor': 1
+            # 'conversion_factor': 0.0625
+        },
         'lpm': {
             'name': 'l/min',
             'suffix': 'lpm',
