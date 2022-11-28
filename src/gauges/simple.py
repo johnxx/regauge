@@ -8,6 +8,7 @@ LINE_GRAPH = "0"
 TEXT = "1"
 MULTI_LED = "2"
 ALPHA = "3"
+MULTI_LED_BRIGHTNESS = "4"
 
 instrumentation = False
 instrumentation_ts = False
@@ -29,6 +30,8 @@ class SimpleGauge(Gauge):
                 options['gauge_face']['type'] = 'text'
             elif options['gauge_face']['ofType'] == MULTI_LED:
                 options['gauge_face']['type'] = 'multi_led'
+            elif options['gauge_face']['ofType'] == MULTI_LED_BRIGHTNESS:
+                options['gauge_face']['type'] = 'multi_led_brightness'
             elif options['gauge_face']['ofType'] == ALPHA:
                 options['gauge_face']['type'] = 'alpha'
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])

@@ -31,9 +31,9 @@ class Face(GaugeFace):
         self.options = self._apply_defaults(options)
         self.resources = resources
         self.pixels = resources['leds']
-        self.lcd = resources['lcd']
         
         if self.options['label']:
+            self.lcd = resources['lcd']
             font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
             if self.options['label'] == 'top':
                 self.label = Label(font, text='', color=self.options['font_color'], scale=1,

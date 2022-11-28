@@ -70,7 +70,7 @@ class DataSource():
             },
             "liquid_lpm": {
                 "min": 0,
-                "max": 10,
+                "max": 100,
                 "pattern": "zigzag",
                 "increment": .1,
                 "every": 1

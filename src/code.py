@@ -15,11 +15,6 @@ from passy import Passy
 DISPLAY_GROUP = "0"
 NEOPIXEL_SLICE = "1"
 
-LINE_GRAPH = "0"
-TEXT = "1"
-MULTI_LED = "2"
-ALPHA = "3"
-
 uprofile.enabled = False
 instrumentation = False
 debug = False
