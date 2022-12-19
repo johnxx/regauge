@@ -1,0 +1,35 @@
+{
+    "name": "hum",
+    "update_freq": 1,
+    "time_series": {
+        "upto_vals": 1
+    },
+    "stream_spec": {
+        "field_spec": "rhum_pct",
+        "min_val": 0,
+        "max_val": 100
+    },
+    "gauge_face": {
+        "type": "multi_led",
+        "normal_color": 6619391,
+        "warning_color": 65280,
+        "critical_color": 16711782,
+        "warning_level": 75,
+        "critical_level": 90,
+        "label": "top",
+        "fmt_string": "{:>1.2f}{}"
+    },
+    "resources": [
+        {
+            "type": "neopixel_slice",
+            "start": 3,
+            "end": -4,
+            "step": -1
+        },
+        {
+            "type": "display_group",
+            "x_offset": 0,
+            "y_offset": 0
+        }
+    ]
+}

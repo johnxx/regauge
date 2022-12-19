@@ -1,0 +1,39 @@
+{
+    "net_msgpack": {
+        "enabled": false,
+        "type": "tcp_msgpack",
+        "poll_freq": 10,
+        "listen_port": 4557,
+        "bind_addr": "0.0.0.0"
+    },
+    "mock": {
+        "enabled": true,
+        "type": "mock",
+        "poll_freq": 30,
+        "send_frame_ids": [
+            "all"
+        ]
+    },
+    "net_http_config": {
+        "enabled": false,
+        "type": "http_ampule",
+        "config_source": true,
+        "bind_addr": "0.0.0.0",
+        "listen_port": 80
+    },
+    "can": {
+        "enabled": false,
+        "type": "canbus",
+        "poll_freq": 20
+    },
+    "i2c_scd4x": {
+        "enabled": false,
+        "type": "i2c_scd4x",
+        "poll_freq": 1
+    },
+    "i2c_pmsa003i": {
+        "enabled": false,
+        "type": "i2c_pmsa003i",
+        "poll_freq": 1
+    }
+}

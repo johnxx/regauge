@@ -1,0 +1,42 @@
+{
+    "wifi": {
+        "enabled": false,
+        "ssid": "SomethingClever",
+        "passphrase": "<redacted>"
+    },
+    "i2c": {
+        "enabled": true,
+        "pins": {
+            "scl": "RX",
+            "sda": "TX"
+        }
+    },
+    "can": {
+        "enabled": false,
+        "pins": {
+            "tx": "TX",
+            "rx": "RX"
+        },
+        "bit_rate": 500000
+    },
+    "lcd": {
+        "enabled": true,
+        "pins": {
+            "rst": "D10",
+            "cs": "D20",
+            "dc": "D21",
+            "bl": "D11"
+        },
+        "height": 240,
+        "width": 240
+    },
+    "leds": {
+        "enabled": true,
+        "pins": {
+            "data": "D16"
+        },
+        "order": "GRB",
+        "brightness": 0.1,
+        "number": 16
+    }
+}
