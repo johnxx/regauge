@@ -41,7 +41,7 @@ class DataSource():
 
     frameMagic = bytearray([0x44, 0x33, 0x22, 0x11])
 
-    def __init__(self, name, resources, poll_freq=5) -> None:
+    def __init__(self, name, resources, poll_freq=5, enabled=True) -> None:
         self._poll_freq = poll_freq
         self.data_bus = resources['data_bus']
         self.frame_idx = 0

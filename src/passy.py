@@ -2,7 +2,6 @@
 from asynccp.time import Duration
 from functools import partial
 import uprofile
-import json
 
 uprofile.enabled = False
 debug = False
@@ -31,7 +30,6 @@ class Passy():
     @uprofile.profile('passy', 'pub')
     def pub(self, topic, msg, auto_send=True):
         print_dbg("Got a message about {}".format(topic))
-        # print_dbg("{}: {}".format(topic, json.dumps(msg)))
         for sub_id, topic_prefs in self.subscriptions.items():
             for topic_pref in topic_prefs:
                 if topic.startswith(topic_pref):

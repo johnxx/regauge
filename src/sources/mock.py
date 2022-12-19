@@ -113,7 +113,7 @@ class DataSource():
         print_dbg("Adding: {}".format(mock_frame[0]))
         return mock_frame[0]
 
-    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all') -> None:
+    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all', enabled=True) -> None:
         if send_frame_ids == 'all':
             self.send_frame_ids = list(map(self._get_frame_id, self.mock_frames))
         else:

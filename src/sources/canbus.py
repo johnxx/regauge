@@ -30,7 +30,7 @@ class DataSource():
 
     match = canio.Match(0x600, 0x100)
 
-    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all') -> None:
+    def __init__(self, name, resources, poll_freq=5, send_frame_ids='all', enabled=True) -> None:
         self.bus = resources['can']
         self.data_bus = resources['data_bus']
         self.poll_freq = poll_freq

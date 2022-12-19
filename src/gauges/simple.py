@@ -4,36 +4,19 @@ from timeseries import TimeSeries
 import json
 import time
 
-LINE_GRAPH = "0"
-TEXT = "1"
-MULTI_LED = "2"
-ALPHA = "3"
-MULTI_LED_BRIGHTNESS = "4"
-
 instrumentation = False
 instrumentation_ts = False
 dump_cfg = False
 
 class SimpleGauge(Gauge):
-    def __init__(self, options, resources) -> None:
+    def __init__(self, name, options, resources) -> None:
         if dump_cfg:
             print("options: {}".format(json.dumps(options)))
             print("resources: {}".format(json.dumps(resources)))
         self.stream_spec = StreamSpec(**options['stream_spec'])
         self.ts = TimeSeries(stream_spec=self.stream_spec, **options['time_series'])
+        self.name = name
         self.options = options
-        # @TODO: Looks like we're not setting 'type' 
-        if 'type' not in options['gauge_face']:
-            if options['gauge_face']['ofType'] == LINE_GRAPH:
-                options['gauge_face']['type'] = 'line_graph'
-            elif options['gauge_face']['ofType'] == TEXT:
-                options['gauge_face']['type'] = 'text'
-            elif options['gauge_face']['ofType'] == MULTI_LED:
-                options['gauge_face']['type'] = 'multi_led'
-            elif options['gauge_face']['ofType'] == MULTI_LED_BRIGHTNESS:
-                options['gauge_face']['type'] = 'multi_led_brightness'
-            elif options['gauge_face']['ofType'] == ALPHA:
-                options['gauge_face']['type'] = 'alpha'
         gauge_face_module = __import__('gauges.faces.' + options['gauge_face']['type'])
         gauge_face_class = getattr(gauge_face_module.faces, options['gauge_face']['type']).Face
         self.face = gauge_face_class(self.ts, options['gauge_face'], resources)
@@ -43,13 +26,13 @@ class SimpleGauge(Gauge):
         return self.ts.subscribed_streams
     
     def stream_updated(self, updates):
-        if instrumentation_ts and instrumentation_ts == self.options['name']:
+        if instrumentation_ts and instrumentation_ts == self.name:
             start_time = time.monotonic()
         self.ts.stream_updated(updates)
-        if instrumentation_ts and instrumentation_ts == self.options['name']:
+        if instrumentation_ts and instrumentation_ts == self.name:
             end_time = time.monotonic()
             total = end_time - start_time
-            print("{} took {}s".format(self.options['name'], total))
+            print("{} took {}s".format(self.name, total))
 
     async def update(self):
         if instrumentation:
@@ -58,7 +41,7 @@ class SimpleGauge(Gauge):
         if instrumentation:
             end_time = time.monotonic()
             total = end_time - start_time
-            print("{} took {}s".format(self.options['name'], total))
+            print("{} took {}s".format(self.name, total))
         
     def config_updated(self, messages):
         try:

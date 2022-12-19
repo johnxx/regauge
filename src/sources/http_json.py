@@ -34,7 +34,7 @@ class ConfigSource(ListenServer):
     HEADERS = 4
     DATA = 5
 
-    def __init__(self, name, resources, target, bind_addr="0.0.0.0", listen_port=80, listeners=5, poll_freq=5) -> None:
+    def __init__(self, name, resources, target, bind_addr="0.0.0.0", listen_port=80, listeners=5, poll_freq=5, enabled=True) -> None:
         self.msgbus = resources['config_bus']
         super().__init__(name, resources, target, bind_addr, listen_port, listeners)
         

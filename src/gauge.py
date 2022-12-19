@@ -1,5 +1,6 @@
 class Gauge():
-    def __init__(self, options, resources) -> None:
+    def __init__(self, name, options, resources) -> None:
+        self.name = name
         self.options = options
         self.resources = resources
 

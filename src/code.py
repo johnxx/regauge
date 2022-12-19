@@ -4,6 +4,7 @@ import board
 import displayio
 import json
 import neopixel_slice
+import os
 import time
 import uprofile
 #from data import data
@@ -12,9 +13,6 @@ from adafruit_display_shapes import line
 from adafruit_display_text.label import Label
 from passy import Passy
 
-DISPLAY_GROUP = "0"
-NEOPIXEL_SLICE = "1"
-
 uprofile.enabled = False
 instrumentation = False
 debug = False
@@ -22,17 +20,16 @@ def print_dbg(some_string, **kwargs):
     if debug:
         return print(some_string, **kwargs)
 
-def initialize_gauges(layout, resources):
+def initialize_gauges(gauges, resources):
     gauge_tasks = []
-    for idx, block in enumerate(layout):
+    for gauge_name, block in gauges.items():
         # @TODO: Deprecated settings. May return in another form at some point in the future
         block['type'] = 'simple'
         block['sub_type'] = 'SimpleGauge'
 
         gauge_resources = {}
         for resource_config in block['resources']:
-            # print(json.dumps(resource_config))
-            if resource_config['ofType'] == NEOPIXEL_SLICE:
+            if resource_config['type'] == 'neopixel_slice':
                 if 'step' in resource_config and resource_config['step']:
                     keys = range(
                         resource_config['start'],
@@ -49,7 +46,7 @@ def initialize_gauges(layout, resources):
                     
                 gauge_resource = neopixel_slice.NeoPixelSlice(resources['leds'], keys)
                 gauge_resources['leds'] = gauge_resource
-            elif resource_config['ofType'] == DISPLAY_GROUP:
+            elif resource_config['type'] == 'display_group':
                 gauge_resource = displayio.Group(x=int(resource_config['x_offset']), y=int(resource_config['y_offset']))
                 resources['lcd']['main_context'].append(gauge_resource)
                 gauge_resources['display_group'] = gauge_resource
@@ -61,17 +58,15 @@ def initialize_gauges(layout, resources):
 
         gauge_module = __import__('gauges.' + block['type'], None, None, [block['sub_type']])
         gauge_class = getattr(gauge_module, block['sub_type'])
-        # gauge = gauge_class(gauge_options, resources, data)
-        # print(json.dumps(gauge_resources))
-        gauge = gauge_class(block, gauge_resources)
+        gauge = gauge_class(gauge_name, block, gauge_resources)
         if 'config_bus' in resources:
-            print("{} subscribed to config.layout.{}".format(block['name'], block['name']))
-            resources['config_bus'].sub(gauge.config_updated, "config.layout.{}".format(block['name']))
+            print("{} subscribed to config.gauges.{}".format(gauge_name, gauge_name))
+            resources['config_bus'].sub(gauge.config_updated, "config.gauges.{}".format(gauge_name))
         if 'data_bus' in resources:
             for field_spec in gauge.subscribed_streams:
-                print("{} wants to subscribe to {}".format(block['name'], field_spec))
+                print("{} wants to subscribe to {}".format(gauge_name, field_spec))
                 resources['data_bus'].sub(gauge.stream_updated, "data.{}".format(field_spec))
-        print("{}: {}Hz".format(block['name'], gauge.update_freq))
+        print("{}: {}Hz".format(gauge_name, gauge.update_freq))
         gauge_tasks.append(asynccp.schedule(frequency=int(gauge.update_freq), coroutine_function=gauge.update))
     return gauge_tasks
             
@@ -83,23 +78,8 @@ def setup_tasks(config, resources):
     msg_bus = None
     for data_source, options in config['data_sources'].items():
         if 'type' not in options:
-            if data_source == 'config_listener':
-                options['type'] = 'http_ampule'
-                options['config_source'] = True
-            elif data_source == 'data_listener':
-                options['type'] = 'tcp_msgpack'
-            elif data_source == 'data_can':
-                options['type'] = 'canbus'
-            elif data_source == 'data_mock':
-                options['type'] = 'mock'
-            elif data_source == 'data_i2c_scd4x':
-                options['type'] = 'i2c_scd4x'
-            elif data_source == 'data_i2c_pmsa003i':
-                options['type'] = 'i2c_pmsa003i'
-            elif data_source == 'data_dio_flow':
-                options['type'] = 'dio_flow'
-            else:
-                print("Failed to infer type for {}".format(data_source))
+            print("Failed to infer type for {}".format(data_source))
+            raise Exception
         if 'enabled' not in options:
             print("Automatically enabled {}".format(data_source))
             options['enabled'] = True
@@ -125,13 +105,13 @@ def setup_tasks(config, resources):
                     resources['data_bus'] = msg_bus
                 data_source_obj = data_source_class(data_source, resources, **options)
             tasks['data_sources'][data_source] = asynccp.schedule(frequency=data_source_obj.poll_freq, coroutine_function=data_source_obj.poll)
-    tasks['gauges'] = initialize_gauges(config['layout'], resources)
+    tasks['gauges'] = initialize_gauges(config['gauges'], resources)
     return tasks
         
 def setup_hardware(hardware):
     resources = {}
 
-    if hardware['can']['enabled']:
+    if 'can' in hardware and hardware['can']['enabled']:
         can_cfg = hardware['can']
         import canio
         import digitalio
@@ -148,14 +128,14 @@ def setup_hardware(hardware):
         tx_pin = getattr(board, can_cfg['pins']['tx'])
         resources['can'] = canio.CAN(rx=rx_pin, tx=tx_pin, baudrate=can_cfg['bit_rate'], auto_restart=True)
         
-    if hardware['i2c']['enabled']:
+    if 'i2c' in hardware and hardware['i2c']['enabled']:
         import busio
         i2c_cfg = hardware['i2c']
         scl_pin = getattr(board, i2c_cfg['pins']['scl'])
         sda_pin = getattr(board, i2c_cfg['pins']['sda'])
-        resources['i2c'] = busio.I2C(scl_pin, sda_pin)
+        resources['i2c'] = busio.I2C(scl_pin, sda_pin, frequency=100000)
 
-    if hardware['wifi']['enabled']:
+    if 'wifi' in hardware and hardware['wifi']['enabled']:
         wifi_cfg = hardware['wifi']
         import wifi
         import socketpool
@@ -166,7 +146,7 @@ def setup_hardware(hardware):
 
         resources['socket_pool'] = socketpool.SocketPool(wifi.radio)
         
-    if hardware['lcd']['enabled']:
+    if 'lcd' in hardware and hardware['lcd']['enabled']:
         lcd_cfg = hardware['lcd']
         import displayio
         import gc9a01
@@ -174,8 +154,7 @@ def setup_hardware(hardware):
         spi = board.SPI()
         while not spi.try_lock():
             pass
-        #desired_baudrate = 80_000_000
-        desired_baudrate = 160_000_000
+        desired_baudrate = 80_000_000
         spi.configure(baudrate=desired_baudrate) # Configure SPI for 80MHz
         print("Asked for {}Hz. Got {}Hz".format(desired_baudrate, spi.frequency))
         spi.unlock()
@@ -226,7 +205,7 @@ def setup_hardware(hardware):
         lcd.show(main_context)
 
         
-    if hardware['leds']['enabled']:
+    if 'leds' in hardware and hardware['leds']['enabled']:
         led_cfg = hardware['leds']
         import neopixel
 
@@ -244,12 +223,48 @@ def setup_hardware(hardware):
 
     return resources
 
+def load_config(config_path='/config.d'):
+    config = {}
+    config_files = os.listdir(config_path)
+    for section in ['hardware', 'data_sources', 'gauges']:
+        config[section] = {}
+
+        section_filename = section + ".json"
+        if section_filename in config_files:
+            section_path = '/'.join([config_path, section_filename])
+            try:
+                with open(section_path) as f:
+                    print_dbg("Loaded {}".format(section_path))
+                    config[section] = json.load(f)
+            except:
+                print_dbg(str(e))
+
+        section_dir = section + ".d"
+        if section_dir in config_files:
+            section_path = '/'.join([config_path, section_dir])
+            try:
+                for file_name in os.listdir(section_path):
+                    if not file_name.endswith('.json') or len(file_name) < 6:
+                        continue
+                    config_name = file_name.rsplit('.json', 1)[0]
+                    with open('/'.join([section_path, file_name])) as f:
+                        try:
+                            config[section][config_name] = json.load(f)
+                        except Exception as e:
+                            print("Failed to load {}".format())
+                            print_dbg(str(e))
+            except:
+                print_dbg(str(e))
+    print_dbg(json.dumps(config))
+    return config
+    
 
 if __name__ == '__main__':
-    fp = open('config.json', 'r')
-    config = json.load(fp)
-    # config = j['config']
+    # Load the config
+    config = load_config()
+    # Setup hardware and return configured resources
     resources = setup_hardware(config['hardware'])
-    # resources = allocate_resources(config['layout'], resources)
+    # Schedule tasks like data_sources and gauges
     tasks = setup_tasks(config, resources)
+    # Run the scheduled tasks in a loop
     asynccp.run()

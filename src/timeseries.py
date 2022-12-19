@@ -67,7 +67,7 @@ class TimeSeries():
     def trim(self):
         cur_time = time.monotonic()
         if self.upto_vals > 0 and len(self.data) > self.upto_vals:
-            print_dbg("Trimmed due to too many values!")
+            print("Trimmed due to too many values!")
             del self.data[:-self.upto_vals]
         if self.retain_for_s > 0:
             for n, v in enumerate(self.data):
