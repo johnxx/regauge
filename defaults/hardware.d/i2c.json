@@ -1,0 +1,7 @@
+{
+    "enabled": false,
+    "pins": {
+        "scl": "RX",
+        "sda": "TX"
+    }
+}

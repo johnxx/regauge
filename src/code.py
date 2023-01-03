@@ -1,6 +1,7 @@
 import asynccp
 import asynccp.time as Duration
 import board
+import config_tools
 import displayio
 import json
 import neopixel_slice
@@ -224,44 +225,58 @@ def setup_hardware(hardware):
     return resources
 
 def load_config(config_path='/config.d'):
+
     config = {}
     config_files = os.listdir(config_path)
     for section in ['hardware', 'data_sources', 'gauges']:
         config[section] = {}
 
-        section_filename = section + ".json"
-        if section_filename in config_files:
-            section_path = '/'.join([config_path, section_filename])
-            try:
-                with open(section_path) as f:
-                    print_dbg("Loaded {}".format(section_path))
-                    config[section] = json.load(f)
-            except:
-                print_dbg(str(e))
+        board_section_filename = section + "." + board.board_id + ".json"
+        generic_section_filename = section + ".json"
+        for section_filename in [board_section_filename, generic_section_filename]:
+            if section_filename in config_files:
+                section_path = '/'.join([config_path, section_filename])
+                try:
+                    with open(section_path) as f:
+                        print("Config: Loaded {}".format(section_path))
+                        config[section] = json.load(f)
+                except:
+                    print("Config: Failed to load {}".format(section_path))
+                    print_dbg(str(e))
+                finally:
+                    break
 
-        section_dir = section + ".d"
-        if section_dir in config_files:
-            section_path = '/'.join([config_path, section_dir])
-            try:
-                for file_name in os.listdir(section_path):
-                    if not file_name.endswith('.json') or len(file_name) < 6:
-                        continue
-                    config_name = file_name.rsplit('.json', 1)[0]
-                    with open('/'.join([section_path, file_name])) as f:
-                        try:
-                            config[section][config_name] = json.load(f)
-                        except Exception as e:
-                            print("Failed to load {}".format())
-                            print_dbg(str(e))
-            except:
-                print_dbg(str(e))
+        generic_section_dir = section + ".d"
+        board_section_dir = section + "." + board.board_id + ".d"
+        for section_dir in [generic_section_dir, board_section_dir]:
+            if section_dir in config_files:
+                section_path = '/'.join([config_path, section_dir])
+                try:
+                    for file_name in os.listdir(section_path):
+                        if not file_name.endswith('.json') or len(file_name) < 6:
+                            continue
+                        config_name = file_name.rsplit('.json', 1)[0]
+                        full_path = '/'.join([section_path, file_name]) 
+                        with open(full_path) as f:
+                            try:
+                                config[section][config_name] = json.load(f)
+                                print("Config: Loaded {}".format(full_path))
+                            except Exception as e:
+                                print("Config: Failed to load {}".format(full_path))
+                                print_dbg(str(e))
+                except:
+                    print_dbg(str(e))
     print_dbg(json.dumps(config))
     return config
     
 
 if __name__ == '__main__':
+    # Load the defaults
+    defaults = load_config('/config.d/defaults')
     # Load the config
-    config = load_config()
+    config = load_config('/config.d')
+    # Merge the config over the top of the defaults
+    config = config_tools.merge(defaults, config)
     # Setup hardware and return configured resources
     resources = setup_hardware(config['hardware'])
     # Schedule tasks like data_sources and gauges

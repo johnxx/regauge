@@ -5,7 +5,7 @@ from gauge_face import GaugeFace
 class Face(GaugeFace):
 
     default_options = {
-        'font': 'LanterosySansSerif-lite-100.bdf',
+        'font': 'BarlowCondensed-Regular-56.bdf',
         'font_color':0xCCCCCC, 
         'fmt_string': "{:>3.0f}{}", 
         'offset_x': 210, 
@@ -42,7 +42,7 @@ class Face(GaugeFace):
         for element in self.resources['display_group']:
             self.resources['display_group'].remove(element)
 
-        font = bitmap_font.load_font("/share/fonts/" + self.options['font'])
+        font = bitmap_font.load_font("/fonts/" + self.options['font'])
         if 'lcd_bg' in self.options['effects']:
             if self.options['fmt_string'] == self.default_options['fmt_string']:
                 self.options['fmt_string'] = "{:!>3.0f}"

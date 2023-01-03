@@ -1,0 +1,8 @@
+{
+    "enabled": false,
+    "pins": {
+        "tx": "TX",
+        "rx": "RX"
+    },
+    "bit_rate": 500000
+}

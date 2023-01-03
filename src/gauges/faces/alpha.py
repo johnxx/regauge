@@ -183,7 +183,7 @@ class Face(GaugeFace):
         # 'label_font': 'Cloude_Regular_Bold_1.02-32.bdf',
         'position': 'top',
         'gradient': "yellow_blurple",
-        'label_font': 'PixelLCD-7-16.bdf',
+        'label_font': 'Abel-Regular-20.bdf',
         'font_color': 0xCCCCCC, 
         'fmt_string': "{:>3.0f}{}", 
         'bar_color': 0xFF8888, 
@@ -276,7 +276,7 @@ class Face(GaugeFace):
             points += arc_points(r, a3, a1)
             # points[-1] = (points[-1][0], -y3+y_offset)
 
-            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
+            font = bitmap_font.load_font("/fonts/" + opts['label_font'])
             label = Label(font, text='', color=opts['font_color'], scale=1,
                                     anchor_point=(1, 0), anchored_position=(100, 123))
 
@@ -299,7 +299,7 @@ class Face(GaugeFace):
             points.append(o_tl((18, 20)))
             points.append(o_tl((10, 2)))
 
-            font = bitmap_font.load_font("/share/fonts/" + opts['label_font'])
+            font = bitmap_font.load_font("/fonts/" + opts['label_font'])
             label = Label(font, text='', color=opts['font_color'], scale=1,
                                     anchor_point=(1, 0), anchored_position=(225, 103))
 

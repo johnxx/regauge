@@ -7,7 +7,7 @@
         "bind_addr": "0.0.0.0"
     },
     "mock": {
-        "enabled": true,
+        "enabled": false,
         "type": "mock",
         "poll_freq": 30,
         "send_frame_ids": [

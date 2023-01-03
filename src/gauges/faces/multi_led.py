@@ -18,7 +18,7 @@ class Face(GaugeFace):
         'critical_color': 0xff0000,
         'off_color': 0x000000,
         'label': None,
-        'label_font': 'PixelLCD-7-16.bdf',
+        'label_font': 'Abel-Regular-20.bdf',
         'font_color':0xCCCCCC, 
         'fmt_string': "{:>3.0f}{}", 
     }
@@ -34,13 +34,13 @@ class Face(GaugeFace):
         
         if self.options['label']:
             self.lcd = resources['lcd']
-            font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
+            font = bitmap_font.load_font("/fonts/" + self.options['label_font'])
             if self.options['label'] == 'top':
                 self.label = Label(font, text='', color=self.options['font_color'], scale=1,
                                         anchor_point=(1, 0), anchored_position=(145, 20))
             elif self.options['label'] == 'bottom':
                 self.label = Label(font, text='', color=self.options['font_color'], scale=1,
-                                        anchor_point=(1, 0), anchored_position=(145, 220))
+                                        anchor_point=(1, 0), anchored_position=(145, 200))
             resources['display_group'].append(self.label)
 
         self.pixels.fill(self.options['off_color'])

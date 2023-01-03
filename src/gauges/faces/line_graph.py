@@ -29,7 +29,7 @@ class Face(GaugeFace):
     }
 
     def _setup_display(self):
-        font = bitmap_font.load_font("/share/fonts/" + self.options['label_font'])
+        font = bitmap_font.load_font("/fonts/" + self.options['label_font'])
 
         self.text_top = Label(font, text='', color=self.options['font_color'], scale=1,
                                 anchor_point=(0.5, 1), anchored_position=(self.options['label_offset_x'], self.options['label_offset_y']))

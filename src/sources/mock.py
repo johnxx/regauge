@@ -42,31 +42,31 @@ class DataSource():
         (0x998, {
             "pm2_5": {
                 "min": 0,
-                "max": 150,
-                "pattern": "sin",
-                "increment": 0.15,
-                "every": 1
+                "max": 250,
+                "pattern": "zigzag",
+                "increment": 0.5,
+                "every": 30
             },
             "co2_ppm": {
                 "min": 0,
                 "max": 5000,
                 "pattern": "zigzag",
-                "increment": 1,
-                "every": 1
+                "increment": 100,
+                "every": 30
             },
             "temp_cel": {
                 "min": 0,
                 "max": 100,
                 "pattern": "zigzag",
                 "increment": 1,
-                "every": 1
+                "every": 30
             },
             "rhum_pct": {
                 "min": 0,
                 "max": 100,
                 "pattern": "zigzag",
-                "increment": 100,
-                "every": 1
+                "increment": 1,
+                "every": 30
             },
             "liquid_lpm": {
                 "min": 0,

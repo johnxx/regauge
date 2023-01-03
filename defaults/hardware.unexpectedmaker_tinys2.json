@@ -1,24 +1,4 @@
 {
-    "wifi": {
-        "enabled": false,
-        "ssid": "SomethingClever",
-        "passphrase": "<redacted>"
-    },
-    "i2c": {
-        "enabled": true,
-        "pins": {
-            "scl": "RX",
-            "sda": "TX"
-        }
-    },
-    "can": {
-        "enabled": false,
-        "pins": {
-            "tx": "TX",
-            "rx": "RX"
-        },
-        "bit_rate": 500000
-    },
     "lcd": {
         "enabled": true,
         "pins": {
