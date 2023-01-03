@@ -18,7 +18,7 @@ And several different ways to visualize the data (what I've taken to calling "ga
 The codebase is designed to make it easy to add your own data sources and gauge faces and I intend to write a lot more of both as time goes on. 
 
 ## Quickstart
-1. Download the [latest release](https://github.com)
+1. Download the [latest release](https://github.com/johnxx/regauge/releases)
 1. Copy the contents of the archive to your CircuitPython device, replacing any files that are already on the device.
 1. To get started, copy the `config.d` folder from the `examples/mock_demo` folder to your CircuitPython device
 ## Upgrades
