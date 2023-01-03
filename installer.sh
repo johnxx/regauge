@@ -6,6 +6,7 @@ if [ -z "$1" ] ; then
 fi
 target="$1"
 
+mkdir -p "$target"
 if ! [ -d "$target" ] ; then
   exit 2
 fi
